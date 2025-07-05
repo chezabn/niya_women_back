@@ -28,7 +28,7 @@ docker-build:
 ## stop-db: stop container of database
 .PHONY: stop-db
 stop-db:
-	docker compose --env-file database/.env -f database/docker-compose.yml down
+	docker compose --env-file database/.env -f database/docker-compose.yml down -v
 
 # ==================================================================================== #
 # RUN
