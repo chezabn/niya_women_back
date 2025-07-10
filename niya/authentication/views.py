@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import connections
-from authentication.serializers import UserSerializer, RegisterSerializer
+from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
 
