@@ -7,9 +7,9 @@ from authentication.models import User
 class AuthTests(APITestCase):
 
     def setUp(self):
-        self.register_url = reverse('register_api')
-        self.login_url = reverse('login_api')
-        self.users_url = reverse('users_api')
+        self.register_url = reverse("register_api")
+        self.login_url = reverse("login_api")
+        self.users_url = reverse("users_api")
 
         self.user_data = {
             "username": "testuser",
@@ -17,13 +17,13 @@ class AuthTests(APITestCase):
             "password": "TestPass123",
             "password2": "TestPass123",
             "first_name": "Test",
-            "last_name": "User"
+            "last_name": "User",
         }
 
         self.user = User.objects.create_user(
             username="existinguser",
             email="existing@example.com",
-            password="password123"
+            password="password123",
         )
 
     # Test signup
@@ -36,17 +36,19 @@ class AuthTests(APITestCase):
 
     # Test login JWT
     def test_user_can_login(self):
-        response = self.client.post(self.login_url, {
-            "username": "existinguser",
-            "password": "password123"
-        }, format='json')
+        response = self.client.post(
+            self.login_url,
+            {"username": "existinguser", "password": "password123"},
+            format="json",
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("access", response.json())
         self.assertIn("refresh", response.json())
 
     def test_user_cant_login(self):
-        response = self.client.post(self.login_url, {
-            "username": "notExistingUser",
-            "password": "password123"
-        }, format='json')
+        response = self.client.post(
+            self.login_url,
+            {"username": "notExistingUser", "password": "password123"},
+            format="json",
+        )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

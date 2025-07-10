@@ -12,7 +12,7 @@ __version__ = "1.0.0"
 
 class Healthcheck(APIView):
     def get(self, request):
-        db_conn = connections['default']
+        db_conn = connections["default"]
         try:
             cursor = db_conn.cursor()
         except Exception as e:
@@ -22,7 +22,7 @@ class Healthcheck(APIView):
                     "version": __version__,
                     "status": "Database connection failed",
                 },
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
         return Response(
             {
@@ -30,7 +30,7 @@ class Healthcheck(APIView):
                 "version": __version__,
                 "status": "Database connection established",
             },
-            status=status.HTTP_200_OK
+            status=status.HTTP_200_OK,
         )
 
 
@@ -52,8 +52,7 @@ class UserAPIView(APIView):
         user = request.user
         user.delete()
         return Response(
-            {"message": "Account deleted"},
-            status=status.HTTP_204_NO_CONTENT
+            {"message": "Account deleted"}, status=status.HTTP_204_NO_CONTENT
         )
 
 
@@ -71,6 +70,6 @@ class RegisterAPIView(APIView):
                     "access_token": access_token,
                     "refresh_token": refresh_token,
                 },
-                status=status.HTTP_201_CREATED
+                status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
