@@ -11,6 +11,17 @@ __version__ = "1.0.0"
 
 
 class Healthcheck(APIView):
+    """
+        Healthcheck endpoint for the Authentication API.
+
+        Performs a simple check to ensure the application and database connection are operational.
+
+        :param request: HTTP GET request
+        :type request: rest_framework.request.Request
+        :return: JSON response with API name, version, and database connection status
+        :rtype: rest_framework.response.Response
+    """
+
     def get(self, request):
         db_conn = connections["default"]
         try:
@@ -35,6 +46,25 @@ class Healthcheck(APIView):
 
 
 class UserAPIView(APIView):
+    """
+        Authenticated user endpoint to retrieve, update, or delete the user account.
+
+        Requires a valid JWT token in the Authorization header.
+
+        GET:
+            Retrieve the authenticated user's information.
+
+        PATCH:
+            Partially update the authenticated user's information.
+
+        DELETE:
+            Delete the authenticated user's account.
+
+        :param request: HTTP request (GET, PATCH, DELETE)
+        :type request: rest_framework.request.Request
+        :return: JSON response with user data or confirmation message
+        :rtype: rest_framework.response.Response
+    """
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
@@ -57,6 +87,20 @@ class UserAPIView(APIView):
 
 
 class RegisterAPIView(APIView):
+    """
+        User registration endpoint.
+
+        Accepts user registration data and creates a new user account.
+        Returns access and refresh JWT tokens on successful registration.
+
+        POST:
+            Register a new user.
+
+        :param request: HTTP POST request with user registration data
+        :type request: rest_framework.request.Request
+        :return: JSON response with tokens or validation errors
+        :rtype: rest_framework.response.Response
+    """
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():

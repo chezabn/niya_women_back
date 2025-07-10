@@ -73,7 +73,7 @@ build-auth-api:
 ## stop-db: stop container of database
 .PHONY: stop-db
 stop-db:
-	docker compose --env-file database/.env -f database/docker-compose.yml down -v
+	docker compose --env-file database/.env -f database/docker-compose.yml down
 
 # ==================================================================================== #
 # RUN DATABASE SERVICE
