@@ -27,7 +27,7 @@ SECRET_KEY = 'django-insecure-0v$xm(hfzo@rsywq9=uzpt7i%@z3n9dr#1^4afb#n@b934l6d@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'auth_api', '0.0.0.0']
 
 
 # Application definition
@@ -92,11 +92,11 @@ SIMPLE_JWT = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'authentication',
-        'USER': 'chazabn',
-        'PASSWORD': 'Saad93380',
-        'HOST': '127.0.0.1',   # <- Important : PAS localhost
-        'PORT': '5000',
+        'NAME': os.getenv('MYSQL_DATABASE'),
+        'USER': 'root',
+        'PASSWORD': os.getenv('MYSQL_PASSWORD'),
+        'HOST': os.getenv('MYSQL_HOST'),
+        'PORT': os.getenv('MYSQL_PORT'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }
