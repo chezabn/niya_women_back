@@ -10,7 +10,7 @@ class Company(models.Model):
     phone = models.CharField(max_length=100, blank=True, null=True)
     email = models.CharField(max_length=100, blank=True, null=True)
     website = models.CharField(max_length=200, blank=True, null=True)
-    description = models.CharField(max_length=500, blank=True, null=True)
+    description = models.CharField(max_length=500)
     logo = models.CharField(max_length=500, blank=True, null=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
 
