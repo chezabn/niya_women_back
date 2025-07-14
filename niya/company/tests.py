@@ -1,4 +1,3 @@
-from click import confirm
 from django.contrib.auth import get_user_model
 from .models import Company
 from rest_framework.test import APITestCase
