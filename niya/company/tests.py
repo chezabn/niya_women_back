@@ -42,7 +42,7 @@ class CompanyAPITest(APITestCase):
         self.assertEqual(Company.objects.first().name, "Test Company")
         self.assertEqual(Company.objects.first().description, "Company description")
 
-    def test_create_company_without_name_fails(self):
+    def test_create_company_without_required_attribute(self):
         data = {
             "description": "Missing name",
         }
