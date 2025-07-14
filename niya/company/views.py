@@ -124,12 +124,7 @@ class CompanyView(APIView):
 class CompanyNameView(APIView):
     """
     API endpoint to retrieve a company by its name.
-
-    Requires authentication. Returns serialized company data if found,
-    or an error message with HTTP 404 status if no matching company exists.
     """
-
-    permission_classes = [IsAuthenticated]
 
     def get(self, request, name):
         """
