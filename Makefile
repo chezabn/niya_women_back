@@ -21,18 +21,10 @@ help:
 migrations:
 	python niya/manage.py makemigrations
 
-# ==================================================================================== #
-# MIGRATE
-# ==================================================================================== #
-
 ## migrate: migrate
 .PHONY: migrate
 migrate:
 	python niya/manage.py migrate
-
-# ==================================================================================== #
-# UPDATE DATABASE
-# ==================================================================================== #
 
 ## db: update database with makemigrations and migrate
 .PHONY: db
@@ -51,10 +43,31 @@ run-server:
 # TEST
 # ==================================================================================== #
 
-## test: test all application in the project
+## test: test auth app
 .PHONY: test-auth
 test-auth:
 	python niya/manage.py test authentication
+
+
+## test: test company app
+.PHONY: test-comp
+test-comp:
+	python niya/manage.py test company
+
+## test: test all app in project
+.PHONY: test
+test:
+	python niya/manage.py test
+
+# ==================================================================================== #
+# FORMAT
+# ==================================================================================== #
+
+## black: do black for all project
+.PHONY: black
+black:
+	black .
+
 
 # ==================================================================================== #
 # FREEZE

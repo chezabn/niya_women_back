@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from .models import Company
 
+
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
         model = Company
@@ -16,7 +17,9 @@ class CompanySerializer(serializers.ModelSerializer):
             if not data.get("name"):
                 raise serializers.ValidationError({"name": "This field is required"})
             if not data.get("description"):
-                raise serializers.ValidationError({"description": "This field is required"})
+                raise serializers.ValidationError(
+                    {"description": "This field is required"}
+                )
         return data
 
     def create(self, validated_data):

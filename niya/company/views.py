@@ -9,6 +9,7 @@ from .models import Company
 
 class CompanyView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = CompanySerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
@@ -39,7 +40,9 @@ class CompanyView(APIView):
         try:
             company = Company.objects.get(user=request.user)
         except Company.DoesNotExist:
-            return Response({"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = CompanySerializer(
             company, data=request.data, partial=True, context={"request": request}
@@ -55,11 +58,31 @@ class CompanyView(APIView):
         try:
             company = Company.objects.get(user=request.user)
         except Company.DoesNotExist:
-            return Response({"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         confirmation = request.data.get("confirm", False)
         if not confirmation:
-            return Response({"error": "Confirm required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Confirm required"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         company.delete()
-        return Response({"message": "Company deleted"}, status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"message": "Company deleted"}, status=status.HTTP_204_NO_CONTENT
+        )
+
+
+class CompanyNameView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, name):
+        try:
+            company = Company.objects.get(name=name)
+            serializer = CompanySerializer(company)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except Company.DoesNotExist:
+            return Response(
+                {"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND
+            )

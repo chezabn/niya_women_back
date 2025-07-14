@@ -4,6 +4,11 @@ from django.db import models
 User = get_user_model()
 
 
+class CompanyManager(models.Manager):
+    def get_company_by_name(self, name):
+        return self.get(name=name)
+
+
 class Company(models.Model):
     name = models.CharField(max_length=100)
     address = models.CharField(max_length=100, blank=True, null=True)
