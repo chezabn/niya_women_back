@@ -89,19 +89,19 @@ build-auth-api:
 
 
 # ==================================================================================== #
-# STOP DATABASE SERVICE
+# STOP ALL SERVICES
 # ==================================================================================== #
 
-## stop-db: stop container of database
-.PHONY: stop-db
-stop-db:
-	docker compose --env-file database/.env -f database/docker-compose.yml down
+## stop-dev: stop container of database
+.PHONY: stop-dev
+stop-dev:
+	docker compose --env-file database/.env.dev -f database/docker-compose.yml down
 
 # ==================================================================================== #
-# RUN DATABASE SERVICE
+# RUN ALL SERVICES
 # ==================================================================================== #
 
-## run-db: run container of database
-.PHONY: run-db
-run-db:stop-db build-auth-api
-	docker compose --env-file database/.env -f database/docker-compose.yml up -d
+## run-dev: run container of database
+.PHONY: run-dev
+run-dev:stop-db build-auth-api
+	docker compose --env-file database/.env.dev -f database/docker-compose.yml up -d

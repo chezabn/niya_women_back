@@ -8,7 +8,7 @@ class Publication(models.Model):
     media = models.CharField(max_length=100, blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
-    likes = models.ManyToManyField(User, related_name="liked_comment", blank=True)
+    likes = models.ManyToManyField(User, related_name="liked_publication", blank=True)
 
     def __str__(self):
         return self.description

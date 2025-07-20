@@ -4,7 +4,7 @@ services:
     container_name: mysql_auth
     restart: always
     env_file:
-      - .env
+      - ".env.dev"
     volumes:
       - mysql-auth:/var/lib/mysql
     ports:
@@ -20,7 +20,7 @@ services:
     ports:
       - "5001:5001"
     env_file:
-      - ".env"
+      - ".env.dev"
     depends_on:
       database:
         condition: service_healthy
