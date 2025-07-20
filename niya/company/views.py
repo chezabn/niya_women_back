@@ -121,7 +121,7 @@ class CompanyView(APIView):
         )
 
 
-class CompanyNameView(APIView):
+class CompanyIDView(APIView):
     """
     API endpoint to retrieve a company by its name.
 
@@ -131,20 +131,20 @@ class CompanyNameView(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, name):
+    def get(self, request, company_id):
         """
         Retrieve a company by its name.
 
         :param request: HTTP request.
         :type request: rest_framework.request.Request
-        :param name: Name of the company to retrieve.
-        :type name: str
+        :param company_id: Identy of the company to retrieve.
+        :type company_id: int
 
         :return: Serialized company data or error message.
         :rtype: rest_framework.response.Response
         """
         try:
-            company = Company.objects.get(name=name)
+            company = Company.objects.get(id=company_id)
             serializer = CompanySerializer(company)
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Company.DoesNotExist:
