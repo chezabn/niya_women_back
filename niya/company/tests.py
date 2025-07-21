@@ -62,7 +62,9 @@ class CompanyAPITest(APITestCase):
         self.assertEqual(company["description"], "desc")
 
     def test_get_company_by_id(self):
-        company = Company.objects.create(user=self.user, name="Test Company", description="desc")
+        company = Company.objects.create(
+            user=self.user, name="Test Company", description="desc"
+        )
         url = reverse("company_api_id", kwargs={"company_id": company.id})
         response = self.client.get(url, **self.auth_headers)
         self.assertEqual(response.status_code, 200)

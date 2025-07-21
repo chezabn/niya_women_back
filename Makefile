@@ -54,6 +54,11 @@ test-auth:
 test-comp:
 	python niya/manage.py test company
 
+## test: test publication app
+.PHONY: test-publ
+test-publ:
+	python niya/manage.py test publication
+
 ## test: test all app in project
 .PHONY: test
 test:
