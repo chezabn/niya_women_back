@@ -1,3 +1,4 @@
+from django.db.models.query_utils import Q
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -51,7 +52,14 @@ class CompanyView(APIView):
         :return: List of serialized companies.
         :rtype: rest_framework.response.Response
         """
-        companies = Company.objects.all()
+        search = request.query_params.get("search")
+        if search:
+            search = search.lower()
+            companies = Company.objects.filter(
+                Q(name__icontains=search) | Q(description__icontains=search)
+            )
+        else:
+            companies = Company.objects.all()
         serializer = CompanySerializer(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
