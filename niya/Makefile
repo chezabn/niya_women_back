@@ -87,10 +87,10 @@ freeze:
 # BUILD AUTH API SERVICE
 # ==================================================================================== #
 
-## build-auth-api: Build image of the auth-api service
-.PHONY: build-auth-api
-build-auth-api:
-	docker build -f niya/Dockerfile -t auth_api .
+## build-back: Build image of the back service
+.PHONY: build-back
+build-back:
+	docker build -f Dockerfile -t backend_api .
 
 # ==================================================================================== #
 # STOP ALL SERVICES
@@ -99,7 +99,7 @@ build-auth-api:
 ## stop-dev: stop container of database
 .PHONY: stop-dev
 stop-dev:
-	docker compose --env-file database/.env.dev -f database/docker-compose.yml down
+	docker compose -f database/docker-compose.yml down
 
 # ==================================================================================== #
 # RUN ALL SERVICES
@@ -107,5 +107,5 @@ stop-dev:
 
 ## run-dev: run container of database
 .PHONY: run-dev
-run-dev:stop-db build-auth-api
-	docker compose --env-file database/.env.dev -f database/docker-compose.yml up -d
+run-dev:build-back
+	docker compose -f database/docker-compose.yml up -d
