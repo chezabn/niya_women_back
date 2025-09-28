@@ -81,9 +81,7 @@ class PublicationAPITest(APITestCase):
         new_data = {
             "description": "My publication updated",
         }
-        response = self.client.patch(
-            url, new_data, format="json", **self.auth_headers
-        )
+        response = self.client.patch(url, new_data, format="json", **self.auth_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_publication(self):

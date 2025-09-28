@@ -72,11 +72,19 @@ class CompanyAPITest(APITestCase):
             email="user2@example.com",
             password="password123",
         )
-        Company.objects.create(user=self.user, name="New Company", description="Test description")
-        Company.objects.create(user=user1, name="Saad Test", description="My first company")
-        Company.objects.create(user=user2, name="An other", description="small description")
+        Company.objects.create(
+            user=self.user, name="New Company", description="Test description"
+        )
+        Company.objects.create(
+            user=user1, name="Saad Test", description="My first company"
+        )
+        Company.objects.create(
+            user=user2, name="An other", description="small description"
+        )
 
-        response = self.client.get(self.company_url + "?search=Company", **self.auth_headers)
+        response = self.client.get(
+            self.company_url + "?search=Company", **self.auth_headers
+        )
         self.assertEqual(response.status_code, 200)
         companies = response.json()
         self.assertEqual(len(companies), 2)

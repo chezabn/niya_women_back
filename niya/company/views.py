@@ -11,6 +11,7 @@ from .models import Company
 
 __version__ = "1.0.0"
 
+
 class Healthcheck(APIView):
     """
     Healthcheck endpoint for the Company API.
