@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "company",
+    "publication",
 ]
 
 MIDDLEWARE = [
@@ -93,11 +94,11 @@ SIMPLE_JWT = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "NAME": os.getenv("MYSQL_DATABASE"),
-        "USER": os.getenv("MYSQL_USER"),
-        "PASSWORD": os.getenv("MYSQL_PASSWORD"),
-        "HOST": os.getenv("MYSQL_HOST"),
-        "PORT": os.getenv("MYSQL_PORT"),
+        "NAME": os.getenv("MYSQL_DATABASE", "niyya"),
+        "USER": os.getenv("MYSQL_USER", "root"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD", "Sai.06112002&"),
+        "HOST": os.getenv("MYSQL_HOST", "mysql"),
+        "PORT": os.getenv("MYSQL_PORT", 5000),
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
 }

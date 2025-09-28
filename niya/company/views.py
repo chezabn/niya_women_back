@@ -1,3 +1,5 @@
+from django.db import connections
+from django.db.models.query_utils import Q
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -5,6 +7,44 @@ from rest_framework.views import APIView
 
 from .serializers import CompanySerializer
 from .models import Company
+
+
+__version__ = "1.0.0"
+
+
+class Healthcheck(APIView):
+    """
+    Healthcheck endpoint for the Company API.
+
+    Performs a simple check to ensure the application and database connection are operational.
+
+    :param request: HTTP GET request
+    :type request: rest_framework.request.Request
+    :return: JSON response with API name, version, and database connection status
+    :rtype: rest_framework.response.Response
+    """
+
+    def get(self, request):
+        db_conn = connections["default"]
+        try:
+            cursor = db_conn.cursor()
+        except Exception as e:
+            return Response(
+                {
+                    "name": "Company API",
+                    "version": __version__,
+                    "status": "Database connection failed",
+                },
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        return Response(
+            {
+                "name": "Company API",
+                "version": __version__,
+                "status": "Database connection established",
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class CompanyView(APIView):
@@ -51,7 +91,14 @@ class CompanyView(APIView):
         :return: List of serialized companies.
         :rtype: rest_framework.response.Response
         """
-        companies = Company.objects.all()
+        search = request.query_params.get("search")
+        if search:
+            search = search.lower()
+            companies = Company.objects.filter(
+                Q(name__icontains=search) | Q(description__icontains=search)
+            )
+        else:
+            companies = Company.objects.all()
         serializer = CompanySerializer(companies, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

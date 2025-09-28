@@ -39,8 +39,8 @@ class CompanyAPITest(APITestCase):
         )
         self.assertEqual(response.status_code, 201)
         self.assertEqual(Company.objects.count(), 1)
-        self.assertEqual(Company.objects.first().name, "Test Company")
-        self.assertEqual(Company.objects.first().description, "Company description")
+        self.assertEqual(Company.objects.first().name, data["name"])
+        self.assertEqual(Company.objects.first().description, data["description"])
 
     def test_create_company_without_required_attribute(self):
         data = {
@@ -61,9 +61,39 @@ class CompanyAPITest(APITestCase):
         self.assertEqual(company["name"], "Company1")
         self.assertEqual(company["description"], "desc")
 
-    def test_get_company_by_name(self):
-        Company.objects.create(user=self.user, name="Test Company", description="desc")
-        url = reverse("company_api", kwargs={"name": "Test Company"})
+    def test_get_company_with_name_or_description(self):
+        user1 = User.objects.create_user(
+            username="User1",
+            email="user1@example.com",
+            password="password123",
+        )
+        user2 = User.objects.create_user(
+            username="User2",
+            email="user2@example.com",
+            password="password123",
+        )
+        Company.objects.create(
+            user=self.user, name="New Company", description="Test description"
+        )
+        Company.objects.create(
+            user=user1, name="Saad Test", description="My first company"
+        )
+        Company.objects.create(
+            user=user2, name="An other", description="small description"
+        )
+
+        response = self.client.get(
+            self.company_url + "?search=Company", **self.auth_headers
+        )
+        self.assertEqual(response.status_code, 200)
+        companies = response.json()
+        self.assertEqual(len(companies), 2)
+
+    def test_get_company_by_id(self):
+        company = Company.objects.create(
+            user=self.user, name="Test Company", description="desc"
+        )
+        url = reverse("company_api_id", kwargs={"company_id": company.id})
         response = self.client.get(url, **self.auth_headers)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["name"], "Test Company")
@@ -71,7 +101,7 @@ class CompanyAPITest(APITestCase):
 
     def test_get_not_existing_company_by_name(self):
         Company.objects.create(user=self.user, name="Test Company", description="desc")
-        url = reverse("company_api", kwargs={"name": "Not existing Company"})
+        url = reverse("company_api_id", kwargs={"company_id": 10000})
         response = self.client.get(url, **self.auth_headers)
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.json()["error"], "Company not found")
