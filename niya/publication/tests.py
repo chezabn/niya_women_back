@@ -60,11 +60,38 @@ class PublicationAPITest(APITestCase):
         data = {
             "description": "My First Publication",
         }
-        response = self.client.post(
+        self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
-        response = self.client.get(self.publications_url)
+        response = self.client.get(self.publications_url, **self.auth_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(Publication.objects.count(), 1)
         publication = Publication.objects.first()
         self.assertEqual(publication.description, "My First Publication")
+
+    def test_patch_publication(self):
+        data = {
+            "description": "My First Publication",
+        }
+        response = self.client.post(
+            self.publications_url, data, format="json", **self.auth_headers
+        )
+        publication_id = response.json()["id"]
+        url = reverse("publication-detail", args=[publication_id])
+        new_data = {
+            "description": "My publication updated",
+        }
+        response = self.client.patch(url, new_data, format="json", **self.auth_headers)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_delete_publication(self):
+        data = {
+            "description": "My First Publication",
+        }
+        response = self.client.post(
+            self.publications_url, data, format="json", **self.auth_headers
+        )
+        publication_id = response.json()["id"]
+        url = reverse("publication-detail", args=[publication_id])
+        response = self.client.delete(url, **self.auth_headers)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)

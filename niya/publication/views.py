@@ -28,14 +28,14 @@ class PublicationAPIView(APIView):
 class PublicationDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_object(self, pk):
+    def get_object(self, request, pk):
         try:
             return Publication.objects.get(pk=pk)
         except Publication.DoesNotExist:
             return None
 
     def get(self, request, pk):
-        publication = self.get_object(pk)
+        publication = self.get_object(request, pk)
         if not publication:
             return Response(
                 {"message": "Publication not found"}, status=status.HTTP_404_NOT_FOUND
@@ -44,22 +44,32 @@ class PublicationDetailAPIView(APIView):
         return Response(serializer.data)
 
     def patch(self, request, pk):
-        publication = self.get_object(pk)
+        publication = self.get_object(request, pk)
         if not publication:
             return Response(
                 {"message": "Publication not found"}, status=status.HTTP_404_NOT_FOUND
             )
-        serializer = PublicationSerializer(publication, data=request.data, patch=True)
+        if publication.author != request.user:
+            return Response(
+                {"message": "You are not the author of this publication"},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = PublicationSerializer(publication, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
-        publication = self.get_object(pk)
+        publication = self.get_object(request, pk)
         if not publication:
             return Response(
                 {"message": "Publication not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+        if publication.author != request.user:
+            return Response(
+                {"message": "You are not the author of this publication"},
+                status=status.HTTP_403_FORBIDDEN,
             )
         publication.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

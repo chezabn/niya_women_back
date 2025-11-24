@@ -61,6 +61,34 @@ class CompanyAPITest(APITestCase):
         self.assertEqual(company["name"], "Company1")
         self.assertEqual(company["description"], "desc")
 
+    def test_get_company_with_name_or_description(self):
+        user1 = User.objects.create_user(
+            username="User1",
+            email="user1@example.com",
+            password="password123",
+        )
+        user2 = User.objects.create_user(
+            username="User2",
+            email="user2@example.com",
+            password="password123",
+        )
+        Company.objects.create(
+            user=self.user, name="New Company", description="Test description"
+        )
+        Company.objects.create(
+            user=user1, name="Saad Test", description="My first company"
+        )
+        Company.objects.create(
+            user=user2, name="An other", description="small description"
+        )
+
+        response = self.client.get(
+            self.company_url + "?search=Company", **self.auth_headers
+        )
+        self.assertEqual(response.status_code, 200)
+        companies = response.json()
+        self.assertEqual(len(companies), 2)
+
     def test_get_company_by_id(self):
         company = Company.objects.create(
             user=self.user, name="Test Company", description="desc"

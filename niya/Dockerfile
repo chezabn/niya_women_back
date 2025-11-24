@@ -9,11 +9,11 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
  && rm -rf /var/lib/apt/lists/*
 
-COPY niya/requirements.txt .
+COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY niya .
+COPY . /app
 
 EXPOSE 5001
 
