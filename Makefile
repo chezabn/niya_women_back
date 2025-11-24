@@ -108,5 +108,5 @@ stop-dev:
 
 ## run-dev: run container of database
 .PHONY: run-dev
-run-dev:stop-db build-auth-api
+run-dev: build-auth-api
 	docker compose --env-file database/.env.dev -f database/docker-compose.yml up -d
