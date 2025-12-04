@@ -99,7 +99,7 @@ build-back:
 ## stop-dev: stop container of database
 .PHONY: stop-dev
 stop-dev:
-	docker compose -f database/docker-compose.yml down
+	docker compose --env-file .env.dev -f database/docker-compose.yml down
 
 # ==================================================================================== #
 # RUN ALL SERVICES
@@ -107,5 +107,5 @@ stop-dev:
 
 ## run-dev: run container of database
 .PHONY: run-dev
-run-dev: build-back
+run-dev: stop-dev build-back
 	docker compose -f database/docker-compose.yml up -d
