@@ -1,0 +1,20 @@
+meta {
+  name: Get All Companies
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/api/company/company/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMjE1NTU4LCJpYXQiOjE3NjUwMzE1NTgsImp0aSI6IjY1YzQwMDRjMjNjZDQ4YzI5N2VmNTAzYjE2YWMzMTkyIiwidXNlcl9pZCI6NH0.KujurYexiHukDiPxxRC9lCW0NjLKZDTVknCXskFYXOM
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
