@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.db import connections
+
+from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
@@ -45,7 +47,7 @@ class Healthcheck(APIView):
         )
 
 
-class UserAPIView(APIView):
+class MyUserAPIView(APIView):
     """
     Authenticated user endpoint to retrieve, update, or delete the user account.
 
@@ -119,3 +121,9 @@ class RegisterAPIView(APIView):
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class UsersAPIView(APIView):
+    def get(self, request):
+        users = User.objects.all()
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)

@@ -1,0 +1,24 @@
+meta {
+  name: Get Publication
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{URL}}/api/publications/publications/:id/
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMjEzNjA3LCJpYXQiOjE3NjUwMjk2MDcsImp0aSI6IjYxOWE5MjZlOTAxMjRjYjNiYTU5MmYxOGViNjdlZDEwIiwidXNlcl9pZCI6NH0.L-4Jl7VpBBwNTP4ZP2Jfto-5dUUw0VmWS84HpDNESGU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
