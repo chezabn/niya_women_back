@@ -87,25 +87,45 @@ freeze:
 # BUILD AUTH API SERVICE
 # ==================================================================================== #
 
-## build-back: Build image of the back service
-.PHONY: build-back
-build-back:
-	docker build -f Dockerfile -t backend_api .
+## build-api: Build image of the backend service
+.PHONY: build-api
+build-api:
+	docker build -f Dockerfile -t niyya_backend .
 
 # ==================================================================================== #
 # STOP ALL SERVICES
 # ==================================================================================== #
 
-## stop-dev: stop container of database
+## stop-db: stop sontainer of database
+.PHONY: stop-db
+stop-db:
+	docker compose --env-file .env.dev -f docker/docker-compose.yml down database
+
+## stop-api: stop sontainer of api
+.PHONY: stop-api
+stop-api:
+	docker compose --env-file .env.dev -f docker/docker-compose.yml down backend
+
+## stop-dev: stop container of niyya app
 .PHONY: stop-dev
 stop-dev:
-	docker compose --env-file .env.dev -f database/docker-compose.yml down
+	docker compose --env-file .env.dev -f docker/docker-compose.yml down
 
 # ==================================================================================== #
 # RUN ALL SERVICES
 # ==================================================================================== #
 
 ## run-dev: run container of database
+.PHONY: run-db
+run-db: stop-db
+	docker compose -f docker/docker-compose.yml --project-name niyya-women up -d database
+
+## run-dev: run container of api
+.PHONY: run-api
+run-api: stop-api build-api
+	docker compose -f docker/docker-compose.yml --project-name niyya-women up backend
+
+## run-dev: run container of niyya app
 .PHONY: run-dev
-run-dev: stop-dev build-back
-	docker compose -f database/docker-compose.yml up -d
+run-dev: stop-dev build-api
+	docker compose -f docker/docker-compose.yml --project-name niyya-women up -d
