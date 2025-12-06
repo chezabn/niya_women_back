@@ -1,0 +1,30 @@
+meta {
+  name: Update Publication
+  type: http
+  seq: 4
+}
+
+patch {
+  url: {{URL}}/api/publications/publications/:id/
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMjEzNjA3LCJpYXQiOjE3NjUwMjk2MDcsImp0aSI6IjYxOWE5MjZlOTAxMjRjYjNiYTU5MmYxOGViNjdlZDEwIiwidXNlcl9pZCI6NH0.L-4Jl7VpBBwNTP4ZP2Jfto-5dUUw0VmWS84HpDNESGU
+}
+
+body:json {
+  {
+    "description": "J'ai modifié ma publication"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
