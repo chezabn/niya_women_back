@@ -1,0 +1,24 @@
+meta {
+  name: Delete Follower
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{URL}}/api/followers/follow/:user_id/
+  body: none
+  auth: inherit
+}
+
+params:path {
+  user_id: 3
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMzE3NzY3LCJpYXQiOjE3NjUxMzM3NjcsImp0aSI6ImJlMDYzOGExZmYxMTQ2NjFhMGU0MGJkOGM4MDIwNTdhIiwidXNlcl9pZCI6Mn0.eu66BTAn-Vvt-mB0LHboBSQqx0SdVlh-9Hcw_Zamv6Q
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
