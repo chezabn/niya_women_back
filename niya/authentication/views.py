@@ -122,6 +122,7 @@ class RegisterAPIView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class UsersAPIView(APIView):
     def get(self, request):
         users = User.objects.all()

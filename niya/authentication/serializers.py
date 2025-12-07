@@ -26,6 +26,12 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ["id", "username", "email", "first_name", "last_name"]
 
 
+class UserPreviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "username"]
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     """
     Serializer for user registration.
