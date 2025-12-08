@@ -32,7 +32,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        exclude = ("user",)
+        fields = ["name", "description", "address", "phone", "email", "website", "logo"]
 
     def validate(self, data):
         request = self.context.get("request")
