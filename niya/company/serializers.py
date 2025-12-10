@@ -32,7 +32,7 @@ class CompanySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Company
-        fields = ["name", "description", "address", "phone", "email", "website", "logo"]
+        fields = ["id", "name", "description", "address", "phone", "email", "website", "logo"]
 
     def validate(self, data):
         request = self.context.get("request")
