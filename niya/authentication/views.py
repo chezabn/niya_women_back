@@ -145,7 +145,7 @@ class SendVerificationCodeView(APIView):
         try:
             send_mail(
                 subject="Votre code de vérification",
-                message=f"Votre code de vérification est : {user.verification_code}",
+                message=f"Votre code de vérification est : {user.email_verification_code}",
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
@@ -163,7 +163,7 @@ class VerifyEmailView(APIView):
         if not code:
             return Response({"message": "No code provided"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if user.is_verified(code):
+        if user.is_verification_code_valid(code):
             user.email_verified = True
             user.email_verification_code = None
             user.email_verification_code_expires = None

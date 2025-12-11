@@ -78,7 +78,7 @@ class EmailVerificationTest(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
-
+        self.user.refresh_from_db()
         # Vérifie qu'un e-mail a été "envoyé" (en dev, dans mail.outbox)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(self.user.email_verification_code, mail.outbox[0].body)
