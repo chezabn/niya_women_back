@@ -1,11 +1,11 @@
 meta {
-  name: Update My User
+  name: Verfy Mail
   type: http
-  seq: 6
+  seq: 2
 }
 
-patch {
-  url: {{URL}}/api/users/user/
+post {
+  url: {{URL}}/api/users/verify-email/
   body: json
   auth: inherit
 }
@@ -16,7 +16,7 @@ headers {
 
 body:json {
   {
-    "email": "saad.rafiqul1@gmail.com"
+    "code": "418586"
   }
 }
 

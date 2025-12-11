@@ -1,23 +1,17 @@
 meta {
-  name: Update My User
+  name: Send Verification Code
   type: http
-  seq: 6
+  seq: 1
 }
 
-patch {
-  url: {{URL}}/api/users/user/
-  body: json
+post {
+  url: {{URL}}/api/users/send-verification-code/
+  body: none
   auth: inherit
 }
 
 headers {
   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwNjYxOTQ0LCJpYXQiOjE3NjU0Nzc5NDQsImp0aSI6ImU5ZDJlMWE4YmVlMzQ3OGU4OTMxNjFlZmIzZjgwOTM3IiwidXNlcl9pZCI6Nn0.zxtLHhQaNI1IsYF3wmxw1QAwD96tDq2zkygic253F8I
-}
-
-body:json {
-  {
-    "email": "saad.rafiqul1@gmail.com"
-  }
 }
 
 settings {
