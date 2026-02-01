@@ -14,7 +14,7 @@ class User(AbstractUser):
 
     # Attribut pour la limitation des tentatives
     failed_login_attempts = models.IntegerField(default=0)
-    last_failed_login = models.DateTimeField(null=True, blank=True)
+    last_failed_login = models.DateTimeField(null=True, blank=True, default=None)
     locked_until = models.DateTimeField(null=True, blank=True)
     require_password_reset = models.BooleanField(default=False)
 
