@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
-from .models import User, Publication
+from authentication.serializers import UserPreviewSerializer
+from .models import Publication, Comment
 
 
 class PublicationSerializer(serializers.ModelSerializer):
@@ -8,3 +9,12 @@ class PublicationSerializer(serializers.ModelSerializer):
         model = Publication
         fields = ["id", "description", "media", "author", "created_at", "likes"]
         read_only_fields = ["author", "created_at"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = UserPreviewSerializer(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "description", "author", "created_at", "publication"]
+        read_only_fields = ["author", "created_at", "publication"]
