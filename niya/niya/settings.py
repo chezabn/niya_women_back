@@ -42,13 +42,14 @@ INSTALLED_APPS = [
     "authentication",
     "rest_framework",
     "rest_framework_simplejwt",
-    "drf_spectacular",
+    "corsheaders",
     "company",
     "publication",
     "follower",
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -56,6 +57,11 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
 ]
 
 ROOT_URLCONF = "niya.urls"
@@ -160,9 +166,3 @@ AUTH_USER_MODEL = "authentication.User"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
-SPECTACULAR_SETTINGS = {
-    "TITLE": "Niyya Women API",
-    "DESCRIPTION": "API of Backend Niyya Women",
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
-}
