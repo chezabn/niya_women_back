@@ -1,7 +1,8 @@
 # ==================================================================================== #
 # VARIABLES
 # ==================================================================================== #
-
+# Fichier .env par défaut
+ENV_FILE := .env
 
 # ==================================================================================== #
 # HELPERS
@@ -19,16 +20,23 @@ help:
 ## migrations: make migrations
 .PHONY: migrations
 migrations:
-	python manage.py makemigrations
+	@echo "🔄 Chargement des variables depuis $(ENV_FILE)..."
+	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py makemigrations
 
 ## migrate: migrate
 .PHONY: migrate
 migrate:
-	python manage.py migrate
+	@echo "🚀 Application des migrations avec les variables de $(ENV_FILE)..."
+	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py migrate
 
 ## db: update database with makemigrations and migrate
 .PHONY: db
 db: migrations migrate
+
+## shell: Open a Django shell with env loaded
+.PHONY: shell
+shell:
+	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py shell
 
 # ==================================================================================== #
 # RUN SERVER
