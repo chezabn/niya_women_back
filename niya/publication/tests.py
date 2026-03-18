@@ -166,7 +166,9 @@ class PublicationCommentAPITest(APITestCase):
             description="My First Publication",
             author=self.user1,
         )
-        self.comment_list_url = reverse("publication-comment", args=[self.publication.id])
+        self.comment_list_url = reverse(
+            "publication-comment", args=[self.publication.id]
+        )
 
     def test_create_comment(self):
         data = {"description": "Great post!"}

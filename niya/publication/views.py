@@ -160,10 +160,7 @@ class PublicationCommentDetailAPIView(APIView):
         """Supprimer un commentaire d'une publication"""
         comment = self.get_comment(request, comment_id)
         user = request.user
-        if (
-            comment.author != user
-            and user != comment.publication.author
-        ):
+        if comment.author != user and user != comment.publication.author:
             return Response(
                 {"message": "You are not the author of this comment"},
                 status=status.HTTP_403_FORBIDDEN,

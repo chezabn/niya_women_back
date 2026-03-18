@@ -61,9 +61,7 @@ class AuthTests(APITestCase):
 class EmailVerificationTest(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password="pass123"
+            username="testuser", email="test@example.com", password="pass123"
         )
         self.token = str(RefreshToken.for_user(self.user).access_token)
         self.auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
@@ -72,10 +70,7 @@ class EmailVerificationTest(APITestCase):
 
     def test_send_verification_code(self):
         """Test l'envoi du code de vérification"""
-        response = self.client.post(
-            self.send_verification_url,
-            **self.auth_headers
-        )
+        response = self.client.post(self.send_verification_url, **self.auth_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("message", response.data)
         self.user.refresh_from_db()
@@ -90,9 +85,7 @@ class EmailVerificationTest(APITestCase):
         code = self.user.email_verification_code
 
         response = self.client.post(
-            self.verify_email_url,
-            {"code": code},
-            **self.auth_headers
+            self.verify_email_url, {"code": code}, **self.auth_headers
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -102,9 +95,7 @@ class EmailVerificationTest(APITestCase):
         """Test avec un code invalide"""
         self.user.generate_verification_code()
         response = self.client.post(
-            self.verify_email_url,
-            {"code": "000000"},
-            **self.auth_headers
+            self.verify_email_url, {"code": "000000"}, **self.auth_headers
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.user.refresh_from_db()
@@ -113,13 +104,15 @@ class EmailVerificationTest(APITestCase):
     def test_verify_email_expired_code(self):
         """Test avec un code expiré"""
         self.user.generate_verification_code()
-        self.user.email_verification_code_expires = timezone.now() - timezone.timedelta(minutes=1)
+        self.user.email_verification_code_expires = timezone.now() - timezone.timedelta(
+            minutes=1
+        )
         self.user.save()
 
         response = self.client.post(
             self.verify_email_url,
             {"code": self.user.email_verification_code},
-            **self.auth_headers
+            **self.auth_headers,
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.user.refresh_from_db()
@@ -129,8 +122,5 @@ class EmailVerificationTest(APITestCase):
         """Empêche de renvoyer un code si déjà vérifié"""
         self.user.email_verified = True
         self.user.save()
-        response = self.client.post(
-            self.send_verification_url,
-            **self.auth_headers
-        )
+        response = self.client.post(self.send_verification_url, **self.auth_headers)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

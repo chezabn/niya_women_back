@@ -87,10 +87,10 @@ freeze:
 # BUILD AUTH API SERVICE
 # ==================================================================================== #
 
-## build-api: Build image of the backend service
-.PHONY: build-api
-build-api:
-	docker build -f Dockerfile -t niyya_backend .
+## docker-build-api: Build image of the backend service
+.PHONY: docker-build-api
+docker-build-api:
+	docker build -f ./docker/Dockerfile -t niyya_backend .
 
 # ==================================================================================== #
 # STOP ALL SERVICES
@@ -99,17 +99,17 @@ build-api:
 ## stop-db: stop sontainer of database
 .PHONY: stop-db
 stop-db:
-	docker compose --env-file .env.dev -f docker/docker-compose.yml down database
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women down database
 
 ## stop-api: stop sontainer of api
 .PHONY: stop-api
 stop-api:
-	docker compose --env-file .env.dev -f docker/docker-compose.yml down backend
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women down backend
 
 ## stop-dev: stop container of niyya app
 .PHONY: stop-dev
 stop-dev:
-	docker compose --env-file .env.dev -f docker/docker-compose.yml down
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women down
 
 # ==================================================================================== #
 # RUN ALL SERVICES
@@ -118,14 +118,14 @@ stop-dev:
 ## run-dev: run container of database
 .PHONY: run-db
 run-db: stop-db
-	docker compose -f docker/docker-compose.yml --project-name niyya-women up -d database
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women up -d database
 
 ## run-dev: run container of api
 .PHONY: run-api
-run-api: stop-api build-api
-	docker compose -f docker/docker-compose.yml --project-name niyya-women up backend
+run-api: stop-api docker-build-api
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women up -d backend
 
 ## run-dev: run container of niyya app
 .PHONY: run-dev
-run-dev: stop-dev build-api
-	docker compose -f docker/docker-compose.yml --project-name niyya-women up -d
+run-dev: stop-dev docker-build-api
+	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women up -d

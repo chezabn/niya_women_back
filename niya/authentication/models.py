@@ -25,8 +25,12 @@ class User(AbstractUser):
     def generate_verification_code(self):
         """Génère un code à 6 chiffres valable 15 minutes"""
         self.email_verification_code = f"{random.randint(100000, 999999)}"
-        self.email_verification_code_expires = timezone.now() + timezone.timedelta(minutes=15)
-        self.save(update_fields=["email_verification_code", "email_verification_code_expires"])
+        self.email_verification_code_expires = timezone.now() + timezone.timedelta(
+            minutes=15
+        )
+        self.save(
+            update_fields=["email_verification_code", "email_verification_code_expires"]
+        )
 
     def is_verification_code_valid(self, code):
         """Vérifie si le code est correct et non expiré"""
@@ -50,12 +54,14 @@ class User(AbstractUser):
         else:
             self.locked_until = None
 
-        self.save(update_fields=[
-            "failed_login_attempts",
-            "last_failed_login",
-            "locked_until",
-            "require_password_reset"
-        ])
+        self.save(
+            update_fields=[
+                "failed_login_attempts",
+                "last_failed_login",
+                "locked_until",
+                "require_password_reset",
+            ]
+        )
 
     def reset_login_attempts(self):
         """Réinitialise les tentatives après login réussi ou réinit mot de passe"""
@@ -63,12 +69,14 @@ class User(AbstractUser):
         self.locked_until = None
         self.require_password_reset = False
         self.last_failed_login = None
-        self.save(update_fields=[
-            "failed_login_attempts",
-            "locked_until",
-            "require_password_reset",
-            "last_failed_login"
-        ])
+        self.save(
+            update_fields=[
+                "failed_login_attempts",
+                "locked_until",
+                "require_password_reset",
+                "last_failed_login",
+            ]
+        )
 
     def is_account_locked(self):
         """Vérifie si le compte est temporairement bloqué"""
