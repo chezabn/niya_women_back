@@ -1,0 +1,24 @@
+meta {
+  name: Register
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{URL}}/api/users/register/
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "username": "saad93380",
+    "password": "Test1234",
+    "password2": "Test1234"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

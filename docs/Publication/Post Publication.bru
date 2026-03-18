@@ -1,0 +1,27 @@
+meta {
+  name: Post Publication
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/api/publications/publications/
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMjE0MDI3LCJpYXQiOjE3NjUwMzAwMjcsImp0aSI6IjI4ODFiODg4MmU3NTQwMjZhZjk5OGZmN2I0NTliYjRiIiwidXNlcl9pZCI6NH0.ZyRyFLIM_CcCLlb--qXZUOjcvMIMwD731yN6S_Hosxo
+}
+
+body:json {
+  {
+    "description": "Ma deuxième publication ! 🌸",
+    "media": "https://example.com/photo.jpg"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

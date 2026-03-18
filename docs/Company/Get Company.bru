@@ -1,0 +1,36 @@
+meta {
+  name: Get Company
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{URL}}/api/company/company/:id/
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MjQxODU5LCJpYXQiOjE3NzAwNTc4NTksImp0aSI6IjFiZWEyYWVkZjg1YTQxZWViM2IwMDFjYmNjMDQzYzVkIiwidXNlcl9pZCI6N30.n4MWQGLABUd8X_DgEXFiR-LYfP63Fm_vE9VKGpwnUwY
+}
+
+body:json {
+  {
+    "name": "Sr Location",
+    "description": "Startup dédiée à la location de biens immobilier.",
+    "address": "123 Rue de l'Égalité, Paris",
+    "phone": "+33123456789",
+    "email": "contact@srloc.fr",
+    "website": "https://srdev.fr/sr-loc",
+    "logo": "https://srdev.fr/sr-loc.png"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

@@ -1,0 +1,26 @@
+meta {
+  name: Verfy Mail
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/api/users/verify-email/
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc1MTQwMDUzLCJpYXQiOjE3Njk5NTYwNTMsImp0aSI6IjRhOTkwNTI2Yjg0ZTRkMDViNDNhNmU4NDk3NjA3MTY3IiwidXNlcl9pZCI6N30.xmjR58QV-IKaZJCbh7RZaJtZLINLJScHKwLm0yIiD3s
+}
+
+body:json {
+  {
+    "code": "565697"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

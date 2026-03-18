@@ -1,0 +1,20 @@
+meta {
+  name: Get All Publications
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{URL}}/api/publications/publications/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMjEzNjA3LCJpYXQiOjE3NjUwMjk2MDcsImp0aSI6IjYxOWE5MjZlOTAxMjRjYjNiYTU5MmYxOGViNjdlZDEwIiwidXNlcl9pZCI6NH0.L-4Jl7VpBBwNTP4ZP2Jfto-5dUUw0VmWS84HpDNESGU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
