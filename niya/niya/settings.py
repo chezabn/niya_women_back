@@ -166,3 +166,4 @@ AUTH_USER_MODEL = "authentication.User"
 
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+FORCE_SCRIPT_NAME = '/api'
