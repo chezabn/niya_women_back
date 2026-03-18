@@ -137,9 +137,15 @@ class SendVerificationCodeView(APIView):
     def post(self, request):
         user = request.user
         if user.email_verified:
-            return Response({"message": "Email already verified"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Email already verified"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if not user.email:
-            return Response({"message": "No email associated with this account"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "No email associated with this account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         user.generate_verification_code()
         try:
@@ -152,7 +158,11 @@ class SendVerificationCodeView(APIView):
             )
         except Exception as e:
             return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        return Response({"message": "Code envoyé vers votre adresse mail"}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Code envoyé vers votre adresse mail"},
+            status=status.HTTP_200_OK,
+        )
+
 
 class VerifyEmailView(APIView):
     permission_classes = [IsAuthenticated]
@@ -161,13 +171,25 @@ class VerifyEmailView(APIView):
         user = request.user
         code = request.data.get("code")
         if not code:
-            return Response({"message": "No code provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "No code provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if user.is_verification_code_valid(code):
             user.email_verified = True
             user.email_verification_code = None
             user.email_verification_code_expires = None
-            user.save(update_fields=["email_verified", "email_verification_code", "email_verification_code_expires"])
-            return Response({"message": "Email verified successfully"}, status=status.HTTP_200_OK)
+            user.save(
+                update_fields=[
+                    "email_verified",
+                    "email_verification_code",
+                    "email_verification_code_expires",
+                ]
+            )
+            return Response(
+                {"message": "Email verified successfully"}, status=status.HTTP_200_OK
+            )
         else:
-            return Response({"message": "Code invalide"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "Code invalide"}, status=status.HTTP_400_BAD_REQUEST
+            )
