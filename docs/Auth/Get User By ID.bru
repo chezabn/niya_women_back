@@ -1,0 +1,24 @@
+meta {
+  name: Get User By ID
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{URL}}/api/users/users/:id
+  body: none
+  auth: inherit
+}
+
+params:path {
+  id: 1
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc5MTA4NzA1LCJpYXQiOjE3NzM5MjQ3MDUsImp0aSI6Ijg5MWQ1Njc3OTQzZTRmYTVhNDYwMGI4NmE2MmRlZGY0IiwidXNlcl9pZCI6Nn0.DDA1fzDH2Wqzydx1Kb_I3xOd8hSCruF5WZjDOq6RH_Q
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
