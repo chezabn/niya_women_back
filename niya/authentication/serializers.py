@@ -19,12 +19,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     :Meta:
         model: :class:`User`
-        fields: ``["id", "username", "email", "first_name", "last_name", "bio]``
+        fields: ``["id", "username", "email", "first_name", "last_name", "bio", "email_verified"]``
     """
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "bio"]
+        fields = ["id", "username", "email", "first_name", "last_name", "bio", "email_verified"]
 
 
 class UserPreviewSerializer(serializers.ModelSerializer):
