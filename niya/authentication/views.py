@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
@@ -35,6 +37,7 @@ class Healthcheck(APIView):
                 {
                     "name": "Authentication API",
                     "version": __version__,
+                    "environment": os.getenv("ENVIRONMENT", "dev"),
                     "status": "Database connection failed",
                 },
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -43,6 +46,7 @@ class Healthcheck(APIView):
             {
                 "name": "Authentication API",
                 "version": __version__,
+                "environment": os.getenv("ENVIRONMENT", "dev"),
                 "status": "Database connection established",
             },
             status=status.HTTP_200_OK,
