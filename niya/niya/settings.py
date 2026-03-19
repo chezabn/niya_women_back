@@ -41,8 +41,8 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1",
     "0.0.0.0",
-    "nabia.alwaysdata.net",
-    "www.nabia.alwaysdata.net",
+    "niwo.alwaysdata.net",
+    "www.niwo.alwaysdata.net",
 ]
 
 
