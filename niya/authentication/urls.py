@@ -7,12 +7,14 @@ from .views import (
     Healthcheck,
     UsersAPIView,
     SendVerificationCodeView,
-    VerifyEmailView,
+    VerifyEmailView, UserDetailAPIView,
 )
 
 urlpatterns = [
     path("user/", MyUserAPIView.as_view(), name="my_user_api"),
     path("users/", UsersAPIView.as_view(), name="users_api"),
+    path("users/<int:pk>/", UserDetailAPIView.as_view(), name="user_detail_api"),
+
     path("register/", RegisterAPIView.as_view(), name="register_api"),
     path("login/", TokenObtainPairView.as_view(), name="login_api"),
     path("healthcheck/", Healthcheck.as_view(), name="healthcheck_auth_api"),

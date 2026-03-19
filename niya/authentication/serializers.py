@@ -13,17 +13,18 @@ class UserSerializer(serializers.ModelSerializer):
     - Email
     - First name
     - Last name
+    - Bio
 
     It is used for displaying user data in a secure, readable format.
 
     :Meta:
         model: :class:`User`
-        fields: ``["id", "username", "email", "first_name", "last_name"]``
+        fields: ``["id", "username", "email", "first_name", "last_name", "bio]``
     """
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+        fields = ["id", "username", "email", "first_name", "last_name", "bio"]
 
 
 class UserPreviewSerializer(serializers.ModelSerializer):
