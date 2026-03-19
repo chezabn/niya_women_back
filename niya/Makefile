@@ -17,21 +17,24 @@ help:
 # MIGRATIONS
 # ==================================================================================== #
 
+## load-env: Load env file
+.PHONY: load-env
+load-env:
+	set -a; source ${ENV_FILE}; set +a;
+
 ## migrations: make migrations
 .PHONY: migrations
 migrations:
-	@echo "🔄 Chargement des variables depuis $(ENV_FILE)..."
-	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py makemigrations
+	python manage.py makemigrations
 
 ## migrate: migrate
 .PHONY: migrate
 migrate:
-	@echo "🚀 Application des migrations avec les variables de $(ENV_FILE)..."
-	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py migrate
+	python manage.py migrate
 
 ## db: update database with makemigrations and migrate
 .PHONY: db
-db: migrations migrate
+db:load-env migrations migrate
 
 ## shell: Open a Django shell with env loaded
 .PHONY: shell
