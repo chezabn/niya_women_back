@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -130,6 +131,46 @@ class UsersAPIView(APIView):
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
+
+class UserDetailAPIView(APIView):
+    """
+    Endpoint pour récupérer les détails d'une utilisatrice spécifique par son ID.
+
+    Cette vue permet à tout utilisateur (connecté ou non) de consulter le profil public
+    d'une autre utilisatrice. Si l'utilisateur consulte son propre profil, il pourrait
+    potentiellement avoir accès à des champs supplémentaires (à gérer dans le sérialiseur).
+
+    URL Pattern: /users/<int:pk>/
+    Method: GET
+
+    :param request: HTTP GET request
+    :type request: rest_framework.request.Request
+    :param pk: Primary Key (ID) de l'utilisatrice cible
+    :type pk: int
+    :return: JSON response contenant les données de l'utilisatrice ou une erreur 404
+    :rtype: rest_framework.response.Response
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, pk: int) -> Response:
+        """
+        Récupère une instance utilisateur basée sur l'ID fourni.
+
+        Utilise get_object_or_404 pour renvoyer automatiquement une 404 propre
+        si l'utilisateur n'existe pas, évitant ainsi de révéler des informations
+        sur la structure de la base de données.
+
+        :param request: La requête HTTP.
+        :param pk: L'identifiant unique de l'utilisatrice.
+        :return: Les données sérialisées de l'utilisatrice.
+        """
+        # Récupération sécurisée de l'objet ou levée d'une exception 404
+        user = get_object_or_404(User, pk=pk)
+
+        # TODO ajouter un serializer pour les profils privées
+        serializer = UserSerializer(user)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SendVerificationCodeView(APIView):
     permission_classes = [IsAuthenticated]
