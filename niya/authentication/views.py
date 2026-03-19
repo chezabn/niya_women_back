@@ -10,11 +10,13 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .constantes import EMAIL_SUBJECT_VERIFICATION, EMAIL_SUBJECT_WELCOME, EMAIL_BODY_VERIFICATION, EMAIL_BODY_WELCOME, \
+    APP_NAME
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
-
+__name__ = "Authentication API"
 
 class Healthcheck(APIView):
     """
@@ -35,7 +37,7 @@ class Healthcheck(APIView):
         except Exception as e:
             return Response(
                 {
-                    "name": "Authentication API",
+                    "name": APP_NAME.format(service=__name__),
                     "version": __version__,
                     "environment": os.getenv("ENVIRONMENT", "dev"),
                     "status": "Database connection failed",
@@ -44,7 +46,7 @@ class Healthcheck(APIView):
             )
         return Response(
             {
-                "name": "Authentication API",
+                "name": APP_NAME.format(service=__name__),
                 "version": __version__,
                 "environment": os.getenv("ENVIRONMENT", "dev"),
                 "status": "Database connection established",
@@ -195,8 +197,8 @@ class SendVerificationCodeView(APIView):
         user.generate_verification_code()
         try:
             send_mail(
-                subject="Votre code de vérification",
-                message=f"Votre code de vérification est : {user.email_verification_code}",
+                subject=EMAIL_SUBJECT_VERIFICATION,
+                message=EMAIL_BODY_VERIFICATION.format(code=user.email_verification_code),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
@@ -231,6 +233,16 @@ class VerifyEmailView(APIView):
                     "email_verification_code_expires",
                 ]
             )
+            try:
+                send_mail(
+                    subject=EMAIL_SUBJECT_WELCOME,
+                    message=EMAIL_BODY_WELCOME.format(first_name=user.first_name),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             return Response(
                 {"message": "Email verified successfully"}, status=status.HTTP_200_OK
             )
