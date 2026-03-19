@@ -1,13 +1,17 @@
 meta {
-  name: Send Verification Code
+  name: Get User By ID
   type: http
-  seq: 1
+  seq: 3
 }
 
-post {
-  url: {{URL}}/api/users/send-verification-code/
+get {
+  url: {{URL}}/api/users/users/:id
   body: none
   auth: inherit
+}
+
+params:path {
+  id: 1
 }
 
 headers {
