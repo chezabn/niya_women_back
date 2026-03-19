@@ -10,13 +10,19 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .constantes import EMAIL_SUBJECT_VERIFICATION, EMAIL_SUBJECT_WELCOME, EMAIL_BODY_VERIFICATION, EMAIL_BODY_WELCOME, \
-    APP_NAME
+from .constantes import (
+    EMAIL_SUBJECT_VERIFICATION,
+    EMAIL_SUBJECT_WELCOME,
+    EMAIL_BODY_VERIFICATION,
+    EMAIL_BODY_WELCOME,
+    APP_NAME,
+)
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
 __name__ = "Authentication API"
+
 
 class Healthcheck(APIView):
     """
@@ -156,6 +162,7 @@ class UserDetailAPIView(APIView):
     :return: JSON response contenant les données de l'utilisatrice ou une erreur 404
     :rtype: rest_framework.response.Response
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk: int) -> Response:
@@ -178,6 +185,7 @@ class UserDetailAPIView(APIView):
 
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class SendVerificationCodeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -198,7 +206,9 @@ class SendVerificationCodeView(APIView):
         try:
             send_mail(
                 subject=EMAIL_SUBJECT_VERIFICATION,
-                message=EMAIL_BODY_VERIFICATION.format(code=user.email_verification_code),
+                message=EMAIL_BODY_VERIFICATION.format(
+                    code=user.email_verification_code
+                ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
