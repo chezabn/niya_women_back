@@ -9,6 +9,8 @@ from .views import (
     SendVerificationCodeView,
     VerifyEmailView,
     UserDetailAPIView,
+    ConfirmPasswordResetView,
+    RequestPasswordResetView,
 )
 
 urlpatterns = [
@@ -25,4 +27,15 @@ urlpatterns = [
         name="send_verification_code",
     ),
     path("verify-email/", VerifyEmailView.as_view(), name="verify_email"),
+    # Reset password
+    path(
+        "request-password-reset/",
+        RequestPasswordResetView.as_view(),
+        name="request_password_reset",
+    ),
+    path(
+        "confirm-password-reset/",
+        ConfirmPasswordResetView.as_view(),
+        name="confirm_password_reset",
+    ),
 ]

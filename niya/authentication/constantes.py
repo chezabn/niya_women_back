@@ -19,6 +19,21 @@ Au plaisir de te lire,
 L'équipe Niyya Women 🌸
 """
 
+EMAIL_BODY_PASSWORD_RESET = """Bonjour {first_name},
+
+Tu as demandé la réinitialisation de ton mot de passe sur Niyya Women. 🌸
+
+Voici ton code de sécurité :
+
+{code}
+
+Ce code est valable pendant 30 minutes.
+
+Si tu n'as pas fait cette demande, ignore simplement cet email. Ton mot de passe restera inchangé.
+
+L'équipe Niyya Women 🌸
+"""
+
 EMAIL_BODY_VERIFICATION = """Bonjour,
 
 Voici votre code de vérification pour confirmer votre adresse email sur Niyya :
