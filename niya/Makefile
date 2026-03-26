@@ -39,7 +39,7 @@ db:load-env migrations migrate
 ## shell: Open a Django shell with env loaded
 .PHONY: shell
 shell:
-	@set -a; source $(ENV_FILE) 2>/dev/null || true; set +a; python manage.py shell
+	python manage.py shell
 
 # ==================================================================================== #
 # RUN SERVER
