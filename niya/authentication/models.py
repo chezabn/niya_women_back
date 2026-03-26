@@ -6,6 +6,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
+    email = models.EmailField(unique=True)
     phone = models.IntegerField(null=True, blank=True)
     bio = models.TextField(null=True, blank=True, default="")
     # Attribut pour la verification du compte
