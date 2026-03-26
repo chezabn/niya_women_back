@@ -6,8 +6,9 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
+    email = models.EmailField(unique=True)
     phone = models.IntegerField(null=True, blank=True)
-    bio = models.TextField(null=True, blank=True, default='')
+    bio = models.TextField(null=True, blank=True, default="")
     # Attribut pour la verification du compte
     email_verified = models.BooleanField(default=False)
     email_verification_code = models.CharField(max_length=6, null=True, blank=True)
@@ -18,6 +19,10 @@ class User(AbstractUser):
     last_failed_login = models.DateTimeField(null=True, blank=True, default=None)
     locked_until = models.DateTimeField(null=True, blank=True)
     require_password_reset = models.BooleanField(default=False)
+
+    # Attribut pour la réinitialisation du mot de passe
+    password_reset_code = models.CharField(max_length=6, null=True, blank=True)
+    password_reset_code_expires = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.username
@@ -41,7 +46,7 @@ class User(AbstractUser):
             return False
         return self.email_verification_code == code
 
-    # Méthode pour la limitation des tentatives de connexion
+    # Méthodes pour la limitation des tentatives de connexion
     def add_failed_login_attempt(self):
         """Incrémente les tentatives et gère le blocage"""
         now = timezone.now()
@@ -88,3 +93,35 @@ class User(AbstractUser):
     def is_password_reset_required(self):
         """Vérifie si une réinitialisation est obligatoire"""
         return self.require_password_reset
+
+    # Méthodes pour la réinitialisation du mot de passe
+    def generate_password_reset_code(self):
+        """
+        Génère un code de réinitialisation de mot de passe à 6 chiffres valable 30 minutes.
+        """
+        self.password_reset_code = f"{random.randint(100000, 999999)}"
+        self.password_reset_code_expires = timezone.now() + timezone.timedelta(
+            minutes=30
+        )
+        self.save(update_fields=["password_reset_code", "password_reset_code_expires"])
+
+    def is_password_reset_code_valid(self, code):
+        """
+        Vérifie si le code de réinitialisation est correct et non expiré.
+
+        :param code: Le code fourni par l'utilisatrice.
+        :type code: str
+        :return: True si valide, False sinon.
+        :rtype: bool
+        """
+        if not self.password_reset_code or not self.password_reset_code_expires:
+            return False
+        if timezone.now() > self.password_reset_code_expires:
+            # Optionnel : Nettoyer le code expiré
+            self.password_reset_code = None
+            self.password_reset_code_expires = None
+            self.save(
+                update_fields=["password_reset_code", "password_reset_code_expires"]
+            )
+            return False
+        return self.password_reset_code == code

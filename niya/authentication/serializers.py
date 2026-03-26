@@ -24,7 +24,15 @@ class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ["id", "username", "email", "first_name", "last_name", "bio", "email_verified"]
+        fields = [
+            "id",
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "bio",
+            "email_verified",
+        ]
 
 
 class UserPreviewSerializer(serializers.ModelSerializer):
@@ -34,31 +42,6 @@ class UserPreviewSerializer(serializers.ModelSerializer):
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    """
-    Serializer for user registration.
-
-    This serializer handles the creation of a new user, including:
-    - Validating that both password fields match
-    - Hashing the password before saving
-    - Returning only safe fields
-
-    Fields:
-        - ``username``: required, unique
-        - ``email``: required, unique
-        - ``password``: required, write-only
-        - ``password2``: confirmation, write-only
-        - ``first_name``: optional
-        - ``last_name``: optional
-
-    :Meta:
-        model: :class:`User`
-        fields:
-            ``["username", "email", "password", "password2", "first_name", "last_name"]``
-
-    :raises serializers.ValidationError:
-        If the two passwords do not match.
-    """
-
     password = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, label="Confirm Password")
 
@@ -73,29 +56,28 @@ class RegisterSerializer(serializers.ModelSerializer):
             "last_name",
         ]
 
-    def validate(self, data):
+    def validate_email(self, value):
         """
-        Validates that both passwords match.
+        Vérifie si l'email existe déjà dans la base de données.
 
-        :param data: Input data from the request
-        :type data: dict
-        :raises serializers.ValidationError: If passwords do not match
-        :return: Validated data
-        :rtype: dict
+        :param value: L'email soumis par l'utilisateur.
+        :type value: str
+        :raises serializers.ValidationError: Si l'email existe déjà.
+        :return: L'email validé.
+        :rtype: str
         """
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError(
+                "Cet adresse email est déjà associée à un compte Niyya Women."
+            )
+        return value
+
+    def validate(self, data):
         if data["password"] != data["password2"]:
             raise serializers.ValidationError("Passwords do not match.")
         return data
 
     def create(self, validated_data):
-        """
-        Creates and returns a new user instance with hashed password.
-
-        :param validated_data: Validated user data (password2 excluded)
-        :type validated_data: dict
-        :return: Newly created User object
-        :rtype: User
-        """
         validated_data.pop("password2")
         password = validated_data.pop("password")
         user = User(**validated_data)

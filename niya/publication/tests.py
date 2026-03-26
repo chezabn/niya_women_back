@@ -1,33 +1,33 @@
+import uuid
 from datetime import datetime
 from time import sleep
 
 from django.contrib.auth import get_user_model
 from rest_framework import status
+from rest_framework.test import APITestCase
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.urls import reverse
 
 from .models import Publication, Comment
-from rest_framework.test import APITestCase
-from django.urls import reverse
-from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
+
+
+# Helper pour générer un email unique à chaque fois
+def get_unique_email(prefix="test"):
+    """Génère un email unique pour éviter les conflits UNIQUE constraint."""
+    unique_id = str(uuid.uuid4())[:8]
+    return f"{prefix}_{unique_id}@example.com"
 
 
 class PublicationAPITest(APITestCase):
     def setUp(self):
         self.publications_url = reverse("publication")
 
-        self.user_data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password": "TestPass123",
-            "password2": "TestPass123",
-            "first_name": "Test",
-            "last_name": "User",
-        }
-
+        # Utilisation d'emails uniques
         self.user = User.objects.create_user(
             username="TestUser",
-            email="usertest@example.com",
+            email=get_unique_email("usertest"),
             password="password123",
         )
 
@@ -35,9 +35,7 @@ class PublicationAPITest(APITestCase):
         self.auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
 
     def test_create_publication(self):
-        data = {
-            "description": "My First Publication",
-        }
+        data = {"description": "My First Publication"}
         response = self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
@@ -48,9 +46,7 @@ class PublicationAPITest(APITestCase):
         self.assertEqual(publication.author, self.user)
 
     def test_create_publication_with_invalid_data(self):
-        data = {
-            "media": "path/image.png",
-        }
+        data = {"media": "path/image.png"}
         response = self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
@@ -58,9 +54,7 @@ class PublicationAPITest(APITestCase):
         self.assertEqual(Publication.objects.count(), 0)
 
     def test_get_publication(self):
-        data = {
-            "description": "My First Publication",
-        }
+        data = {"description": "My First Publication"}
         self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
@@ -71,24 +65,18 @@ class PublicationAPITest(APITestCase):
         self.assertEqual(publication.description, "My First Publication")
 
     def test_patch_publication(self):
-        data = {
-            "description": "My First Publication",
-        }
+        data = {"description": "My First Publication"}
         response = self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
         publication_id = response.json()["id"]
         url = reverse("publication-detail", args=[publication_id])
-        new_data = {
-            "description": "My publication updated",
-        }
+        new_data = {"description": "My publication updated"}
         response = self.client.patch(url, new_data, format="json", **self.auth_headers)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_publication(self):
-        data = {
-            "description": "My First Publication",
-        }
+        data = {"description": "My First Publication"}
         response = self.client.post(
             self.publications_url, data, format="json", **self.auth_headers
         )
@@ -100,8 +88,10 @@ class PublicationAPITest(APITestCase):
 
 class PublicationLikeAPITest(APITestCase):
     def setUp(self):
+        # Création d'utilisateurs avec emails uniques
         self.user1 = User.objects.create_user(
             username="TestUser1",
+            email=get_unique_email("user1_like"),
             password="pass123",
         )
         self.token1 = str(RefreshToken.for_user(self.user1).access_token)
@@ -109,6 +99,7 @@ class PublicationLikeAPITest(APITestCase):
 
         self.user2 = User.objects.create_user(
             username="TestUser2",
+            email=get_unique_email("user2_like"),
             password="pass123",
         )
         self.token2 = str(RefreshToken.for_user(self.user2).access_token)
@@ -148,8 +139,10 @@ class PublicationLikeAPITest(APITestCase):
 
 class PublicationCommentAPITest(APITestCase):
     def setUp(self):
+        # Création d'utilisateurs avec emails uniques
         self.user1 = User.objects.create_user(
             username="TestUser1",
+            email=get_unique_email("user1_comment"),
             password="pass123",
         )
         self.token1 = str(RefreshToken.for_user(self.user1).access_token)
@@ -157,6 +150,7 @@ class PublicationCommentAPITest(APITestCase):
 
         self.user2 = User.objects.create_user(
             username="TestUser2",
+            email=get_unique_email("user2_comment"),
             password="pass123",
         )
         self.token2 = str(RefreshToken.for_user(self.user2).access_token)
@@ -200,6 +194,7 @@ class PublicationCommentAPITest(APITestCase):
         response = self.client.get(self.comment_list_url, **self.auth_headers1)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
+        # Vérifie l'ordre (le plus récent en premier si trié ainsi)
         self.assertEqual(response.data[0]["description"], "Second comment")
 
     def test_update_own_comment(self):
@@ -263,8 +258,11 @@ class PublicationCommentAPITest(APITestCase):
         self.assertEqual(Comment.objects.count(), 0)
 
     def test_delete_comment_as_other_user_forbidden(self):
+        # Correction ici : utilisation d'un email unique pour user3 aussi
         user3 = User.objects.create_user(
-            username="user3", email="user3@example.com", password="pass123"
+            username="user3",
+            email=get_unique_email("user3_forbidden"),
+            password="pass123",
         )
         token3 = str(RefreshToken.for_user(user3).access_token)
         auth_headers3 = {"HTTP_AUTHORIZATION": f"Bearer {token3}"}

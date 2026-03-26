@@ -10,10 +10,20 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
+from .constantes import (
+    EMAIL_SUBJECT_VERIFICATION,
+    EMAIL_SUBJECT_WELCOME,
+    EMAIL_BODY_VERIFICATION,
+    EMAIL_BODY_WELCOME,
+    APP_NAME,
+    EMAIL_SUBJECT_PASSWORD_RESET,
+    EMAIL_BODY_PASSWORD_RESET,
+)
 from .models import User
 from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
+__name__ = "Authentication API"
 
 
 class Healthcheck(APIView):
@@ -35,7 +45,7 @@ class Healthcheck(APIView):
         except Exception as e:
             return Response(
                 {
-                    "name": "Authentication API",
+                    "name": APP_NAME.format(service=__name__),
                     "version": __version__,
                     "environment": os.getenv("ENVIRONMENT", "dev"),
                     "status": "Database connection failed",
@@ -44,7 +54,7 @@ class Healthcheck(APIView):
             )
         return Response(
             {
-                "name": "Authentication API",
+                "name": APP_NAME.format(service=__name__),
                 "version": __version__,
                 "environment": os.getenv("ENVIRONMENT", "dev"),
                 "status": "Database connection established",
@@ -131,7 +141,7 @@ class RegisterAPIView(APIView):
 
 class UsersAPIView(APIView):
     def get(self, request):
-        users = User.objects.all()
+        users = User.objects.filter(is_superuser=False)
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
@@ -154,6 +164,7 @@ class UserDetailAPIView(APIView):
     :return: JSON response contenant les données de l'utilisatrice ou une erreur 404
     :rtype: rest_framework.response.Response
     """
+
     permission_classes = [IsAuthenticated]
 
     def get(self, request, pk: int) -> Response:
@@ -171,10 +182,10 @@ class UserDetailAPIView(APIView):
         # Récupération sécurisée de l'objet ou levée d'une exception 404
         user = get_object_or_404(User, pk=pk)
 
-        # TODO ajouter un serializer pour les profils privées
         serializer = UserSerializer(user)
 
         return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class SendVerificationCodeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -195,8 +206,10 @@ class SendVerificationCodeView(APIView):
         user.generate_verification_code()
         try:
             send_mail(
-                subject="Votre code de vérification",
-                message=f"Votre code de vérification est : {user.email_verification_code}",
+                subject=EMAIL_SUBJECT_VERIFICATION,
+                message=EMAIL_BODY_VERIFICATION.format(
+                    code=user.email_verification_code
+                ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=False,
@@ -231,6 +244,16 @@ class VerifyEmailView(APIView):
                     "email_verification_code_expires",
                 ]
             )
+            try:
+                send_mail(
+                    subject=EMAIL_SUBJECT_WELCOME,
+                    message=EMAIL_BODY_WELCOME.format(first_name=user.first_name),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
             return Response(
                 {"message": "Email verified successfully"}, status=status.HTTP_200_OK
             )
@@ -238,3 +261,146 @@ class VerifyEmailView(APIView):
             return Response(
                 {"message": "Code invalide"}, status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class RequestPasswordResetView(APIView):
+    """
+    Endpoint pour demander la réinitialisation du mot de passe.
+
+    Accepte une adresse email, vérifie si l'utilisateur existe,
+    génère un code de sécurité et l'envoie par email.
+
+    NOTE DE SÉCURITÉ : Pour éviter l'énumération d'utilisateurs,
+    cette API renvoie toujours un succès même si l'email n'existe pas,
+    mais n'envoie l'email que si l'utilisateur existe.
+
+    POST:
+        {"email": "utilisateur@example.com"}
+
+    :param request: HTTP POST request
+    :type request: rest_framework.request.Request
+    :return: Message de succès générique
+    :rtype: rest_framework.response.Response
+    """
+
+    permission_classes = []  # Accessible sans authentification
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response(
+                {"message": "Email est requis"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Recherche de l'utilisateur
+        user = User.objects.filter(email=email).first()
+
+        if user:
+            # Génération et envoi du code uniquement si l'utilisateur existe
+            user.generate_password_reset_code()
+            try:
+                send_mail(
+                    subject=EMAIL_SUBJECT_PASSWORD_RESET,
+                    message=EMAIL_BODY_PASSWORD_RESET.format(
+                        first_name=user.first_name or user.username,
+                        code=user.password_reset_code,
+                    ),
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                # En cas d'erreur d'envoi, on loggue mais on ne révèle pas l'erreur technique au client
+                # Dans un vrai prod, il faudrait logger cela proprement
+                pass
+
+                # Réponse générique pour ne pas révéler si l'email existe ou non
+        return Response(
+            {
+                "message": "Si cet email est enregistré chez nous, vous recevrez un code de réinitialisation sous peu."
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class ConfirmPasswordResetView(APIView):
+    """
+    Endpoint pour confirmer le code et définir le nouveau mot de passe.
+
+    Vérifie le code reçu par email et met à jour le mot de passe si valide.
+
+    POST:
+        {
+            "email": "utilisateur@example.com",
+            "code": "123456",
+            "new_password": "NouveauMotDePasseSecurise"
+        }
+
+    :param request: HTTP POST request
+    :type request: rest_framework.request.Request
+    :return: Succès ou erreurs de validation
+    :rtype: rest_framework.response.Response
+    """
+
+    permission_classes = []  # Accessible sans authentification
+
+    def post(self, request):
+        email = request.data.get("email")
+        code = request.data.get("code")
+        new_password = request.data.get("new_password")
+
+        # Validation des champs obligatoires
+        if not all([email, code, new_password]):
+            return Response(
+                {"message": "Tous les champs (email, code, new_password) sont requis."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Vérification de la complexité du mot de passe (optionnel mais recommandé)
+        if len(new_password) < 8:
+            return Response(
+                {"message": "Le mot de passe doit contenir au moins 8 caractères."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email=email).first()
+
+        if not user:
+            return Response(
+                {"message": "Utilisateur non trouvé ou code invalide."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Vérification du code
+        if not user.is_password_reset_code_valid(code):
+            return Response(
+                {
+                    "message": "Code invalide ou expiré. Veuillez recommencer la demande."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Mise à jour du mot de passe
+        user.set_password(new_password)
+        user.password_reset_code = None
+        user.password_reset_code_expires = None
+        user.reset_login_attempts()  # Reset des tentatives de login échouées aussi
+        user.save(
+            update_fields=[
+                "password",
+                "password_reset_code",
+                "password_reset_code_expires",
+                "failed_login_attempts",
+                "locked_until",
+                "require_password_reset",
+                "last_failed_login",
+            ]
+        )
+
+        return Response(
+            {
+                "message": "Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter."
+            },
+            status=status.HTTP_200_OK,
+        )
