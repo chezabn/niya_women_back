@@ -1,3 +1,4 @@
+import uuid
 from django.core import mail
 from django.urls import reverse
 from django.utils import timezone
@@ -15,9 +16,12 @@ class AuthTests(APITestCase):
         self.login_url = reverse("login_api")
         self.users_url = reverse("users_api")
 
+        # Utilisation d'un UUID court pour garantir l'unicité de l'email à chaque test
+        unique_id = str(uuid.uuid4())[:8]
+
         self.user_data = {
-            "username": "testuser",
-            "email": "test@example.com",
+            "username": f"testuser_{unique_id}",
+            "email": f"test_{unique_id}@example.com",  # Email unique
             "password": "TestPass123",
             "password2": "TestPass123",
             "first_name": "Test",
@@ -25,8 +29,8 @@ class AuthTests(APITestCase):
         }
 
         self.user = User.objects.create_user(
-            username="existinguser",
-            email="existing@example.com",
+            username=f"existinguser_{unique_id}",
+            email=f"existing_{unique_id}@example.com",  # Email unique
             password="password123",
         )
 
@@ -40,9 +44,10 @@ class AuthTests(APITestCase):
 
     # Test login JWT
     def test_user_can_login(self):
+        # On utilise l'utilisateur créé dans le setUp avec son username unique
         response = self.client.post(
             self.login_url,
-            {"username": "existinguser", "password": "password123"},
+            {"username": self.user.username, "password": "password123"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -60,8 +65,12 @@ class AuthTests(APITestCase):
 
 class EmailVerificationTest(APITestCase):
     def setUp(self):
+        unique_id = str(uuid.uuid4())[:8]
+
         self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="pass123"
+            username=f"testuser_verify_{unique_id}",
+            email=f"test_verify_{unique_id}@example.com",  # Email unique
+            password="pass123",
         )
         self.token = str(RefreshToken.for_user(self.user).access_token)
         self.auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {self.token}"}
