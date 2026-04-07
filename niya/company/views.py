@@ -47,7 +47,7 @@ class Healthcheck(APIView):
         )
 
 
-class CompanyView(APIView):
+class MyCompanyView(APIView):
     """
     API endpoint for managing companies.
 
@@ -81,27 +81,28 @@ class CompanyView(APIView):
 
     def get(self, request):
         """
-        Retrieve a list of all companies.
+        Retrieve the company associated with the authenticated user.
 
-        Serializes and returns all companies in the database with HTTP 200 status.
+        Returns the serialized company data if found.
+        Returns HTTP 404 if the user does not have a company yet.
 
         :param request: HTTP request.
         :type request: rest_framework.request.Request
 
-        :return: List of serialized companies.
+        :return: Serialized company data or error message.
         :rtype: rest_framework.response.Response
         """
-        search = request.query_params.get("search")
-        if search:
-            search = search.lower()
-            companies = Company.objects.filter(
-                Q(name__icontains=search) | Q(description__icontains=search)
+        try:
+            # On cherche la compagnie dont le champ 'user' correspond à l'utilisateur connecté
+            company = Company.objects.get(user=request.user)
+        except Company.DoesNotExist:
+            return Response(
+                {"error": "You do not have a company yet."},
+                status=status.HTTP_404_NOT_FOUND
             )
-        else:
-            companies = Company.objects.all()
-        serializer = CompanySerializer(companies, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
+        serializer = CompanySerializer(company, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
     def patch(self, request):
         """
         Partially update the company associated with the authenticated user.
@@ -198,3 +199,28 @@ class CompanyIDView(APIView):
             return Response(
                 {"error": "Company not found"}, status=status.HTTP_404_NOT_FOUND
             )
+
+
+class CompaniesView(APIView):
+    def get(self, request):
+        """
+        Retrieve a list of all companies.
+
+        Serializes and returns all companies in the database with HTTP 200 status.
+
+        :param request: HTTP request.
+        :type request: rest_framework.request.Request
+
+        :return: List of serialized companies.
+        :rtype: rest_framework.response.Response
+        """
+        search = request.query_params.get("search")
+        if search:
+            search = search.lower()
+            companies = Company.objects.filter(
+                Q(name__icontains=search) | Q(description__icontains=search)
+            )
+        else:
+            companies = Company.objects.all()
+        serializer = CompanySerializer(companies, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
