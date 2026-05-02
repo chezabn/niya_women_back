@@ -22,6 +22,7 @@ from .constantes import (
     EMAIL_BODY_PASSWORD_RESET,
 )
 from .models import User
+from .permissions import IsActiveOrPendingVerification
 from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
@@ -247,8 +248,9 @@ class UserDetailAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# Views for verification email
 class SendVerificationCodeView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsActiveOrPendingVerification]
 
     def post(self, request):
         user = request.user
@@ -323,6 +325,7 @@ class VerifyEmailView(APIView):
             )
 
 
+# Views for reset password
 class RequestPasswordResetView(APIView):
     """
     Endpoint pour demander la réinitialisation du mot de passe.
