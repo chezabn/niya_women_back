@@ -44,6 +44,7 @@ class UserPreviewSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     password2 = serializers.CharField(write_only=True, label="Confirm Password")
+    accept_cgu = serializers.BooleanField(required=True, write_only=True)
 
     class Meta:
         model = User
