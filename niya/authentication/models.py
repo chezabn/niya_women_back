@@ -9,6 +9,7 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone = models.IntegerField(null=True, blank=True)
     bio = models.TextField(null=True, blank=True, default="")
+    accept_cgu = models.BooleanField(default=False)
     # Attribut pour la verification du compte
     email_verified = models.BooleanField(default=False)
     email_verification_code = models.CharField(max_length=6, null=True, blank=True)

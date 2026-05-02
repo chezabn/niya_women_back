@@ -54,33 +54,31 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password2",
             "first_name",
             "last_name",
+            "accept_cgu",
         ]
 
-    def validate_email(self, value):
-        """
-        Vérifie si l'email existe déjà dans la base de données.
-
-        :param value: L'email soumis par l'utilisateur.
-        :type value: str
-        :raises serializers.ValidationError: Si l'email existe déjà.
-        :return: L'email validé.
-        :rtype: str
-        """
-        if User.objects.filter(email=value).exists():
+    def validate(self, data):
+        if User.objects.filter(username=data["username"]).exists():
+            raise serializers.ValidationError(
+                "Ce nom d'utilisateur est déjà associée à un compte Niyya Women."
+            )
+        if User.objects.filter(email=data["email"]).exists():
             raise serializers.ValidationError(
                 "Cet adresse email est déjà associée à un compte Niyya Women."
             )
-        return value
-
-    def validate(self, data):
         if data["password"] != data["password2"]:
             raise serializers.ValidationError("Passwords do not match.")
+        if not data["accept_cgu"]:
+            raise serializers.ValidationError(
+                "Les conditions générales d'utilisation doivent être acceptées"
+            )
         return data
 
     def create(self, validated_data):
         validated_data.pop("password2")
         password = validated_data.pop("password")
         user = User(**validated_data)
+        user.is_active = False
         user.set_password(password)
         user.save()
         return user
