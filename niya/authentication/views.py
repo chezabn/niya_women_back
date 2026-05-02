@@ -4,11 +4,13 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .constantes import (
     EMAIL_SUBJECT_VERIFICATION,
@@ -105,6 +107,7 @@ class MyUserAPIView(APIView):
         )
 
 
+# Views for authentication: Registration and Login
 class RegisterAPIView(APIView):
     """
     User registration endpoint.
@@ -138,7 +141,64 @@ class RegisterAPIView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class LoginAPIView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get("username")
 
+        # Check if username exists
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist: # TODO Erreur génériques
+            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Check if account is locked
+        if user.is_account_locked():
+            minutes_remaining = int((user.locked_until - timezone.now()).total_seconds() / 60) + 1
+            return Response( # TODO Ajouter des erreurs génériques
+                {
+                    "detail": f"Compte temporairement bloqué pour sécurité. Réessayez dans {minutes_remaining} minutes.",
+                    "locked_until": user.locked_until
+                },
+                status=status.HTTP_423_LOCKED
+            )
+
+        # Check if account is active
+        if not user.is_active:
+            if not user.email_verified:
+                # TODO Ajouter une fonction qui permet de relancer la vérification de mail ?
+                pass
+            if not user.identity_verified:
+                # TODO Ajouter une fonction qui permet de relancer la vérification de l'identité ?
+                pass
+            return Response(
+                {
+                    "detail": "Votre compte n'est pas encore activé. Veuillez vérifier vos emails ou attendre la validation administrative."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # If all is good, user can log in
+        try:
+            response = super().post(request, *args, **kwargs)
+            if response.status_code == 200:
+                user.reset_login_attempts()
+            return response
+
+        except Exception as e:
+            # Check if account is locked with this attempt
+            user.add_failed_login_attempt()
+            if user.is_account_locked():
+                return Response(
+                    {"detail": "Trop de tentatives échouées. Compte verrouillé pour 10 minutes."},
+                    status=status.HTTP_423_LOCKED
+                )
+
+            return Response(
+                {"detail": f"Nom d'utilisateur ou mot de passe incorrect: {e}"},
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+
+
+# Other
 class UsersAPIView(APIView):
     def get(self, request):
         users = User.objects.filter(is_superuser=False)

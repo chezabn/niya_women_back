@@ -2,9 +2,13 @@ from django.urls import path
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .views import (
-    MyUserAPIView,
-    RegisterAPIView,
+    # Healthcheck
     Healthcheck,
+
+    MyUserAPIView,
+    # Authentication
+    RegisterAPIView,
+    LoginAPIView,
     UsersAPIView,
     SendVerificationCodeView,
     VerifyEmailView,
@@ -14,12 +18,15 @@ from .views import (
 )
 
 urlpatterns = [
+    # Healthcheck
+    path("healthcheck/", Healthcheck.as_view(), name="healthcheck_auth_api"),
+    # Endpoints
     path("user/", MyUserAPIView.as_view(), name="my_user_api"),
     path("users/", UsersAPIView.as_view(), name="users_api"),
     path("users/<int:pk>/", UserDetailAPIView.as_view(), name="user_detail_api"),
+    # Authentication (Register and Login)
     path("register/", RegisterAPIView.as_view(), name="register_api"),
-    path("login/", TokenObtainPairView.as_view(), name="login_api"),
-    path("healthcheck/", Healthcheck.as_view(), name="healthcheck_auth_api"),
+    path("login/", LoginAPIView.as_view(), name="login_api"),
     # Email verification
     path(
         "send-verification-code/",
