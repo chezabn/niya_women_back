@@ -253,6 +253,7 @@ class SendVerificationCodeView(APIView):
     permission_classes = [IsActiveOrPendingVerification]
 
     def post(self, request):
+        print("Entré dans la méthode SendVerficationCodeView")
         user = request.user
         if user.email_verified:
             return Response(
