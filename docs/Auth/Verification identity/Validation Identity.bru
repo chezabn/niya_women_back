@@ -1,0 +1,31 @@
+meta {
+  name: Validation Identity
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{URL}}/api/identification/admin/identity/:id/review/
+  body: json
+  auth: inherit
+}
+
+params:path {
+  id: 2
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzMjQ2Mzg5LCJpYXQiOjE3NzgwNjIzODksImp0aSI6Ijk4MmYyODU5MjdhOTRmNDA4YWE4ODU3N2RkMzRkNGQ4IiwidXNlcl9pZCI6MjV9.Yq-ppkkjVWj8fzxtZbqSbfVTi3KSGMi-vby1r8h6B9g
+}
+
+body:json {
+  {
+    "action": "approve",
+    "rejection_reason": ""
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
