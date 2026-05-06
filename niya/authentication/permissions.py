@@ -13,5 +13,6 @@ class IsActiveOrPendingVerification(permissions.BasePermission):
             return True
         if not user.email_verified:
             return True
-
+        if not user.identity_verified:
+            return True
         return False
