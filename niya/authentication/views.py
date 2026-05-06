@@ -14,12 +14,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .constantes import (
     EMAIL_SUBJECT_VERIFICATION,
-    EMAIL_SUBJECT_WELCOME,
     EMAIL_BODY_VERIFICATION,
-    EMAIL_BODY_WELCOME,
     APP_NAME,
     EMAIL_SUBJECT_PASSWORD_RESET,
-    EMAIL_BODY_PASSWORD_RESET,
+    EMAIL_BODY_PASSWORD_RESET, EMAIL_BODY_EMAIL_VERIFIED, EMAIL_SUBJECT_EMAIL_VERIFIED,
 )
 from .models import User
 from .permissions import IsActiveOrPendingVerification
@@ -253,7 +251,6 @@ class SendVerificationCodeView(APIView):
     permission_classes = [IsActiveOrPendingVerification]
 
     def post(self, request):
-        print("Entré dans la méthode SendVerficationCodeView")
         user = request.user
         if user.email_verified:
             return Response(
@@ -309,8 +306,8 @@ class VerifyEmailView(APIView):
             )
             try:
                 send_mail(
-                    subject=EMAIL_SUBJECT_WELCOME,
-                    message=EMAIL_BODY_WELCOME.format(first_name=user.first_name),
+                    subject=EMAIL_SUBJECT_EMAIL_VERIFIED,
+                    message=EMAIL_BODY_EMAIL_VERIFIED.format(first_name=user.first_name),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,

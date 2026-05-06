@@ -1,15 +1,20 @@
 import os
 
+from authentication.permissions import IsActiveOrPendingVerification
+from django.core.mail import send_mail
 from django.db import connections
 from django.shortcuts import get_object_or_404
 from rest_framework import status, permissions
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from .constants import (
+    EMAIL_SUBJECT_VERIFICATION_REJECTED, EMAIL_BODY_VERIFICATION_REJECTED,
+    EMAIL_SUBJECT_VERIFICATION_APPROVED, EMAIL_BODY_VERIFICATION_APPROVED,
+)
 from .models import IdentityVerificationRequest
 from .serializers import VerificationRequestSerializer, AdminVerificationReviewSerializer
-from authentication.permissions import IsActiveOrPendingVerification
+from niya import settings
 
 
 class Healthcheck(APIView):
@@ -104,20 +109,57 @@ class AdminReviewIdentityView(APIView):
 
     def post(self, request, pk):
         verification_req = get_object_or_404(IdentityVerificationRequest, pk=pk)
-
         serializer = AdminVerificationReviewSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
             action = data['action']
-
+            user = verification_req.user  # On récupère l'utilisatrice concernée
             if action == 'approve':
+                # 1. Valider la demande (change le statut et active le compte)
                 verification_req.approve(request.user)
-                # TODO: Envoyer un email de félicitations à l'utilisatrice
-                return Response({"message": "Identité validée. Le compte a été activé."})
+                # 2. Envoyer l'email de félicitations
+                try:
+                    send_mail(
+                        subject=EMAIL_SUBJECT_VERIFICATION_APPROVED,
+                        message=EMAIL_BODY_VERIFICATION_APPROVED.format(
+                            first_name=user.first_name or user.username
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    # On logge l'erreur mais on ne bloque pas la validation
+                    # La validation est déjà faite en BDD
+                    print(f"Erreur envoi email validation: {e}")
+
+                return Response(
+                    {"message": "Identité validée. Le compte a été activé et un email a été envoyé."},
+                    status=status.HTTP_200_OK
+                )
 
             elif action == 'reject':
-                verification_req.reject(request.user, data.get('rejection_reason', ''))
-                # TODO: Envoyer un email de rejet avec la raison
-                return Response({"message": "Demande rejetée."})
+                reason = data.get('rejection_reason', 'Non spécifié')
+                # 1. Rejeter la demande
+                verification_req.reject(request.user, reason)
+                # 2. Envoyer l'email de rejet
+                try:
+                    send_mail(
+                        subject=EMAIL_SUBJECT_VERIFICATION_REJECTED,
+                        message=EMAIL_BODY_VERIFICATION_REJECTED.format(
+                            first_name=user.first_name or user.username,
+                            rejection_reason=reason
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    print(f"Erreur envoi email rejet: {e}")
+
+                return Response(
+                    {"message": "Demande rejetée. Un email explicatif a été envoyé à l'utilisatrice."},
+                    status=status.HTTP_200_OK
+                )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

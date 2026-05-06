@@ -1,21 +1,26 @@
 # --- Sujets d'emails ---
-EMAIL_SUBJECT_WELCOME = "Bienvenue chez Niyya Women ! 🌸"
+EMAIL_SUBJECT_EMAIL_VERIFIED = "Bienvenue chez Niyya Women ! 🌸"
 EMAIL_SUBJECT_PASSWORD_RESET = "Réinitialisation de votre mot de passe 🔒"
 EMAIL_SUBJECT_VERIFICATION = "Votre code de vérification Niyya"
 
 # --- Corps d'emails (Templates basiques) ---
-EMAIL_BODY_WELCOME = """Bonjour {first_name},
+EMAIL_BODY_EMAIL_VERIFIED = """Bonjour {first_name},
 
-Nous sommes ravies de t'accueillir dans la communauté Niyya Women ! 🎉
+Merci d'avoir confirmé ton adresse email ! ✅
 
-Ton compte a été créé avec succès. Tu fais maintenant partie d'un espace bienveillant dédié aux femmes.
+Ton adresse est désormais vérifiée. Cependant, pour garantir la sécurité et l'esprit bienveillant de notre communauté, une dernière étape est nécessaire avant d'accéder à toutes les fonctionnalités.
 
-Pour commencer l'aventure :
-1. Connecte-toi sur notre plateforme.
-2. Complète ton profil.
-3. Découvre la communauté.
+🔐 Étape suivante : Vérification d'identité
+Pour activer complètement ton compte et rejoindre la communauté, tu dois valider ton identité en prouvant que tu es une femme.
 
-Au plaisir de te lire,
+👉 Comment faire ?
+Connecte-toi à ton espace membre et rends-toi dans la section "Vérification d'identité" pour uploader :
+1. Une photo de ta pièce d'identité.
+2. Un selfie te tenant avec ta pièce.
+
+Nos équipes examineront ta demande sous peu. Dès qu'elle sera validée, tu recevras un email de confirmation et ton compte sera entièrement activé ! 🎉
+
+À très vite sur Niyya Women,
 L'équipe Niyya Women 🌸
 """
 

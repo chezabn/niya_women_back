@@ -1,13 +1,13 @@
-# identity_verification/serializers.py
 from rest_framework import serializers
+
 from .models import IdentityVerificationRequest
+
 
 class VerificationRequestSerializer(serializers.ModelSerializer):
     """Pour l'utilisatrice qui soumet sa demande"""
     class Meta:
         model = IdentityVerificationRequest
         fields = ['id_card_front', 'selfie_with_id']
-        # On ne expose pas le status ou les champs admin ici
 
 class AdminVerificationReviewSerializer(serializers.Serializer):
     """Pour l'admin qui valide ou rejette"""
