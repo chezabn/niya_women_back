@@ -12,6 +12,7 @@ class User(AbstractUser):
     accept_cgu = models.BooleanField(default=False)
     # Attribut pour la vérification d'identitié
     identity_verified = models.BooleanField(default=False)
+    identity_requested = models.BooleanField(default=False)
     # Attribut pour la verification du compte
     email_verified = models.BooleanField(default=False)
     email_verification_code = models.CharField(max_length=6, null=True, blank=True)

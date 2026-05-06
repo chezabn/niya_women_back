@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "authentication",
+    "identity_verification",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",

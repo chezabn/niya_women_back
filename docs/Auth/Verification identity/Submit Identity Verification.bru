@@ -1,17 +1,22 @@
 meta {
-  name: Send Verification Code
+  name: Submit Identity Verification
   type: http
   seq: 1
 }
 
 post {
-  url: {{URL}}/api/users/send-verification-code/
-  body: none
+  url: {{URL}}/api/identification/identity/submit/
+  body: multipartForm
   auth: inherit
 }
 
 headers {
   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzMjQ0OTM4LCJpYXQiOjE3NzgwNjA5MzgsImp0aSI6IjI4YzkzNDI5ZjliZjQ4ZjRhOTlhYWZkNzZlMTMyNzY1IiwidXNlcl9pZCI6MzB9.hN31MZh3dJWVu6uO4XbOfbWzEp0vFFwvcyNFkRu0ztk
+}
+
+body:multipart-form {
+  id_cart_front: 
+  selfie_with_id: @file(/home/saadr/project/niya_women/face-detection/tests/images/faces/image_with_faces_38.jpg)
 }
 
 settings {
