@@ -48,7 +48,7 @@ shell:
 ## run-server: launch server
 .PHONY: run-server
 run-server:
-	python manage.py runserver 0.0.0.0:5001
+	PYTHONPATH=. python manage.py runserver 0.0.0.0:5001
 
 # ==================================================================================== #
 # TEST
