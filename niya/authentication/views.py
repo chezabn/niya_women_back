@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from .constantes import (
+from .constants import (
     EMAIL_SUBJECT_VERIFICATION,
     EMAIL_BODY_VERIFICATION,
     APP_NAME,
@@ -27,6 +27,9 @@ from .serializers import UserSerializer, RegisterSerializer
 
 __version__ = "1.0.0"
 __name__ = "Authentication API"
+
+from libs.errors import USER_NOT_FOUND, ACCOUNT_BLOCKED, ACCOUNT_BAN, ACCOUNT_LOCKED, PASSWORD_FAILED
+
 
 
 class Healthcheck(APIView):
@@ -150,9 +153,9 @@ class LoginAPIView(TokenObtainPairView):
         # Check if username exists
         try:
             user = User.objects.get(username=username)
-        except User.DoesNotExist:  # TODO Erreur génériques
+        except User.DoesNotExist:
             return Response(
-                {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+                {"detail": USER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND
             )
 
         # Check if account is locked
@@ -160,9 +163,9 @@ class LoginAPIView(TokenObtainPairView):
             minutes_remaining = (
                 int((user.locked_until - timezone.now()).total_seconds() / 60) + 1
             )
-            return Response(  # TODO Ajouter des erreurs génériques
+            return Response(
                 {
-                    "detail": f"Compte temporairement bloqué pour sécurité. Réessayez dans {minutes_remaining} minutes.",
+                    "detail": ACCOUNT_BLOCKED.format(minutes_remaining=minutes_remaining),
                     "locked_until": user.locked_until,
                 },
                 status=status.HTTP_423_LOCKED,
@@ -170,18 +173,14 @@ class LoginAPIView(TokenObtainPairView):
 
         # Check if account is active
         if not user.is_active:
-            if not user.email_verified:
-                # TODO Ajouter une fonction qui permet de relancer la vérification de mail ?
-                pass
-            if not user.identity_verified:
-                # TODO Ajouter une fonction qui permet de relancer la vérification de l'identité ?
-                pass
-            return Response(
-                {
-                    "detail": "Votre compte n'est pas encore activé. Veuillez vérifier vos emails ou attendre la validation administrative."
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            if user.email_verified and getattr(user, "identity_verified", False):
+                return Response(
+                    {
+                        "detail": ACCOUNT_BAN,
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+            pass
 
         # If all is good, user can log in
         try:
@@ -196,13 +195,13 @@ class LoginAPIView(TokenObtainPairView):
             if user.is_account_locked():
                 return Response(
                     {
-                        "detail": "Trop de tentatives échouées. Compte verrouillé pour 10 minutes."
+                        "detail": ACCOUNT_LOCKED,
                     },
                     status=status.HTTP_423_LOCKED,
                 )
 
             return Response(
-                {"detail": f"Nom d'utilisateur ou mot de passe incorrect: {e}"},
+                {"detail": PASSWORD_FAILED.format(e=e)},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
