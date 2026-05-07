@@ -102,7 +102,7 @@ class Healthcheck(APIView):
         """
         db_conn = connections["default"]
         try:
-            cursor = db_conn.cursor()
+            _ = db_conn.cursor()
         except Exception as e:
             return Response(
                 {
