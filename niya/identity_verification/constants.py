@@ -1,9 +1,12 @@
 # --- Sujets d'emails (Suite) ---
 EMAIL_SUBJECT_VERIFICATION_APPROVED = (
-    "Félicitations ! Votre compte Niyya Women est validé 🎉"
+    "Félicitations ! Votre compte Niyya Women est validé"
 )
 EMAIL_SUBJECT_VERIFICATION_REJECTED = (
     "Concernant votre demande de vérification Niyya Women"
+)
+EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST = (
+    "Nouvelle demande de vérification d'identité - Niyya Women"
 )
 
 # --- Corps d'emails (Suite) ---
@@ -41,4 +44,27 @@ Nous restons à ta disposition pour toute question.
 
 Bien cordialement,
 L'équipe de modération Niyya Women 🌸
+"""
+
+EMAIL_BODY_NEW_VERIFICATION_REQUEST = """Bonjour l'équipe de modération,
+
+Une nouvelle demande de vérification d'identité vient d'être soumise sur la plateforme Niyya Women.
+
+👤 Utilisatrice : {username} ({email})
+📅 Date de la demande : {created_at}
+
+📂 Documents disponibles :
+- Pièce d'identité : {id_card_url}
+- Selfie avec pièce : {selfie_url}
+
+👉 Action requise :
+Veuillez examiner ces documents et valider ou rejeter la demande depuis l'interface d'administration.
+
+Lien vers le dossier dans l'admin :
+{admin_link}
+
+Merci de traiter cette demande dans les plus brefs délais pour permettre à la membre d'accéder à la communauté.
+
+Cordialement,
+Le système automatisé Niyya Women 🌸
 """
