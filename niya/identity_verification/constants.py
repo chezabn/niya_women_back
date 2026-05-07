@@ -1,6 +1,10 @@
 # --- Sujets d'emails (Suite) ---
-EMAIL_SUBJECT_VERIFICATION_APPROVED = "Félicitations ! Votre compte Niyya Women est validé 🎉"
-EMAIL_SUBJECT_VERIFICATION_REJECTED = "Concernant votre demande de vérification Niyya Women"
+EMAIL_SUBJECT_VERIFICATION_APPROVED = (
+    "Félicitations ! Votre compte Niyya Women est validé 🎉"
+)
+EMAIL_SUBJECT_VERIFICATION_REJECTED = (
+    "Concernant votre demande de vérification Niyya Women"
+)
 
 # --- Corps d'emails (Suite) ---
 

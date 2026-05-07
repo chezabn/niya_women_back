@@ -98,11 +98,12 @@ class MyCompanyView(APIView):
         except Company.DoesNotExist:
             return Response(
                 {"error": "You do not have a company yet."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         serializer = CompanySerializer(company, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
+
     def patch(self, request):
         """
         Partially update the company associated with the authenticated user.

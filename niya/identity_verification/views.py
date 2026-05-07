@@ -9,11 +9,16 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .constants import (
-    EMAIL_SUBJECT_VERIFICATION_REJECTED, EMAIL_BODY_VERIFICATION_REJECTED,
-    EMAIL_SUBJECT_VERIFICATION_APPROVED, EMAIL_BODY_VERIFICATION_APPROVED,
+    EMAIL_SUBJECT_VERIFICATION_REJECTED,
+    EMAIL_BODY_VERIFICATION_REJECTED,
+    EMAIL_SUBJECT_VERIFICATION_APPROVED,
+    EMAIL_BODY_VERIFICATION_APPROVED,
 )
 from .models import IdentityVerificationRequest
-from .serializers import VerificationRequestSerializer, AdminVerificationReviewSerializer
+from .serializers import (
+    VerificationRequestSerializer,
+    AdminVerificationReviewSerializer,
+)
 from niya import settings
 
 
@@ -54,12 +59,12 @@ class Healthcheck(APIView):
         )
 
 
-
 class SubmitIdentityVerificationView(APIView):
     """
     Permet à une utilisatrice de soumettre ses documents pour vérification.
     Accessible même si le compte n'est pas encore actif (is_active=False).
     """
+
     permission_classes = [IsActiveOrPendingVerification]
     parser_classes = [MultiPartParser, FormParser]
 
@@ -67,22 +72,22 @@ class SubmitIdentityVerificationView(APIView):
         user = request.user
 
         # Vérifier si une demande existe déjà
-        if hasattr(user, 'identity_request'):
+        if hasattr(user, "identity_request"):
             req = user.identity_request
-            if req.status == 'PENDING':
+            if req.status == "PENDING":
                 return Response(
                     {"detail": "Une demande est déjà en cours de traitement."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
-            elif req.status == 'APPROVED':
+            elif req.status == "APPROVED":
                 return Response(
                     {"detail": "Votre identité est déjà vérifiée."},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # Si REJECTED, on permet de refaire une demande (on met à jour l'existant ou on en crée un nouveau)
             # Ici, on choisit de mettre à jour l'existant pour garder l'historique simple
-            req.status = 'PENDING'
+            req.status = "PENDING"
             req.rejection_reason = ""
             req.reviewed_by = None
             req.reviewed_at = None
@@ -91,12 +96,17 @@ class SubmitIdentityVerificationView(APIView):
         else:
             instance = None
 
-        serializer = VerificationRequestSerializer(instance, data=request.data, partial=True)
+        serializer = VerificationRequestSerializer(
+            instance, data=request.data, partial=True
+        )
         if serializer.is_valid():
             obj = serializer.save(user=user)
             return Response(
-                {"message": "Documents soumis avec succès. En attente de validation par l'admin.", "id": obj.id},
-                status=status.HTTP_201_CREATED if not instance else status.HTTP_200_OK
+                {
+                    "message": "Documents soumis avec succès. En attente de validation par l'admin.",
+                    "id": obj.id,
+                },
+                status=status.HTTP_201_CREATED if not instance else status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -105,6 +115,7 @@ class AdminReviewIdentityView(APIView):
     """
     Permet à un administrateur de valider ou rejeter une demande.
     """
+
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request, pk):
@@ -112,9 +123,9 @@ class AdminReviewIdentityView(APIView):
         serializer = AdminVerificationReviewSerializer(data=request.data)
         if serializer.is_valid():
             data = serializer.validated_data
-            action = data['action']
+            action = data["action"]
             user = verification_req.user  # On récupère l'utilisatrice concernée
-            if action == 'approve':
+            if action == "approve":
                 # 1. Valider la demande (change le statut et active le compte)
                 verification_req.approve(request.user)
                 # 2. Envoyer l'email de félicitations
@@ -134,12 +145,14 @@ class AdminReviewIdentityView(APIView):
                     print(f"Erreur envoi email validation: {e}")
 
                 return Response(
-                    {"message": "Identité validée. Le compte a été activé et un email a été envoyé."},
-                    status=status.HTTP_200_OK
+                    {
+                        "message": "Identité validée. Le compte a été activé et un email a été envoyé."
+                    },
+                    status=status.HTTP_200_OK,
                 )
 
-            elif action == 'reject':
-                reason = data.get('rejection_reason', 'Non spécifié')
+            elif action == "reject":
+                reason = data.get("rejection_reason", "Non spécifié")
                 # 1. Rejeter la demande
                 verification_req.reject(request.user, reason)
                 # 2. Envoyer l'email de rejet
@@ -148,7 +161,7 @@ class AdminReviewIdentityView(APIView):
                         subject=EMAIL_SUBJECT_VERIFICATION_REJECTED,
                         message=EMAIL_BODY_VERIFICATION_REJECTED.format(
                             first_name=user.first_name or user.username,
-                            rejection_reason=reason
+                            rejection_reason=reason,
                         ),
                         from_email=settings.DEFAULT_FROM_EMAIL,
                         recipient_list=[user.email],
@@ -158,8 +171,10 @@ class AdminReviewIdentityView(APIView):
                     print(f"Erreur envoi email rejet: {e}")
 
                 return Response(
-                    {"message": "Demande rejetée. Un email explicatif a été envoyé à l'utilisatrice."},
-                    status=status.HTTP_200_OK
+                    {
+                        "message": "Demande rejetée. Un email explicatif a été envoyé à l'utilisatrice."
+                    },
+                    status=status.HTTP_200_OK,
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

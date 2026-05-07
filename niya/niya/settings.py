@@ -103,7 +103,7 @@ WSGI_APPLICATION = "niya.wsgi.application"
 # DRF settings
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        'authentication.authentication.CustomJWTAuthentication',
+        "authentication.authentication.CustomJWTAuthentication",
     ),
 }
 

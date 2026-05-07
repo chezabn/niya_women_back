@@ -31,6 +31,7 @@ class CompanySerializer(serializers.ModelSerializer):
     """
 
     owner_id = serializers.ReadOnlyField(source="user.id")
+
     class Meta:
         model = Company
         fields = [
@@ -42,7 +43,7 @@ class CompanySerializer(serializers.ModelSerializer):
             "email",
             "website",
             "logo",
-            "owner_id"
+            "owner_id",
         ]
 
     def validate(self, data):

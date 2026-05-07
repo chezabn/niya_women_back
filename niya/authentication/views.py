@@ -17,7 +17,9 @@ from .constantes import (
     EMAIL_BODY_VERIFICATION,
     APP_NAME,
     EMAIL_SUBJECT_PASSWORD_RESET,
-    EMAIL_BODY_PASSWORD_RESET, EMAIL_BODY_EMAIL_VERIFIED, EMAIL_SUBJECT_EMAIL_VERIFIED,
+    EMAIL_BODY_PASSWORD_RESET,
+    EMAIL_BODY_EMAIL_VERIFIED,
+    EMAIL_SUBJECT_EMAIL_VERIFIED,
 )
 from .models import User
 from .permissions import IsActiveOrPendingVerification
@@ -140,6 +142,7 @@ class RegisterAPIView(APIView):
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class LoginAPIView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         username = request.data.get("username")
@@ -147,18 +150,22 @@ class LoginAPIView(TokenObtainPairView):
         # Check if username exists
         try:
             user = User.objects.get(username=username)
-        except User.DoesNotExist: # TODO Erreur génériques
-            return Response({"message": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+        except User.DoesNotExist:  # TODO Erreur génériques
+            return Response(
+                {"message": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
         # Check if account is locked
         if user.is_account_locked():
-            minutes_remaining = int((user.locked_until - timezone.now()).total_seconds() / 60) + 1
-            return Response( # TODO Ajouter des erreurs génériques
+            minutes_remaining = (
+                int((user.locked_until - timezone.now()).total_seconds() / 60) + 1
+            )
+            return Response(  # TODO Ajouter des erreurs génériques
                 {
                     "detail": f"Compte temporairement bloqué pour sécurité. Réessayez dans {minutes_remaining} minutes.",
-                    "locked_until": user.locked_until
+                    "locked_until": user.locked_until,
                 },
-                status=status.HTTP_423_LOCKED
+                status=status.HTTP_423_LOCKED,
             )
 
         # Check if account is active
@@ -171,8 +178,9 @@ class LoginAPIView(TokenObtainPairView):
                 pass
             return Response(
                 {
-                    "detail": "Votre compte n'est pas encore activé. Veuillez vérifier vos emails ou attendre la validation administrative."},
-                status=status.HTTP_403_FORBIDDEN
+                    "detail": "Votre compte n'est pas encore activé. Veuillez vérifier vos emails ou attendre la validation administrative."
+                },
+                status=status.HTTP_403_FORBIDDEN,
             )
 
         # If all is good, user can log in
@@ -187,13 +195,15 @@ class LoginAPIView(TokenObtainPairView):
             user.add_failed_login_attempt()
             if user.is_account_locked():
                 return Response(
-                    {"detail": "Trop de tentatives échouées. Compte verrouillé pour 10 minutes."},
-                    status=status.HTTP_423_LOCKED
+                    {
+                        "detail": "Trop de tentatives échouées. Compte verrouillé pour 10 minutes."
+                    },
+                    status=status.HTTP_423_LOCKED,
                 )
 
             return Response(
                 {"detail": f"Nom d'utilisateur ou mot de passe incorrect: {e}"},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
 
@@ -307,7 +317,9 @@ class VerifyEmailView(APIView):
             try:
                 send_mail(
                     subject=EMAIL_SUBJECT_EMAIL_VERIFIED,
-                    message=EMAIL_BODY_EMAIL_VERIFIED.format(first_name=user.first_name),
+                    message=EMAIL_BODY_EMAIL_VERIFIED.format(
+                        first_name=user.first_name
+                    ),
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=False,
@@ -465,4 +477,3 @@ class ConfirmPasswordResetView(APIView):
             },
             status=status.HTTP_200_OK,
         )
-

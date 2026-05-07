@@ -19,14 +19,16 @@ class CustomJWTAuthentication(JWTAuthentication):
         from .models import User  # Import local pour éviter les cycles
 
         try:
-            user_id = validated_token['user_id']
+            user_id = validated_token["user_id"]
         except KeyError:
-            raise AuthenticationFailed('Token ne contient pas d\'ID utilisateur', code='no_user_id')
+            raise AuthenticationFailed(
+                "Token ne contient pas d'ID utilisateur", code="no_user_id"
+            )
 
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:
-            raise AuthenticationFailed('Utilisateur non trouvé', code='user_not_found')
+            raise AuthenticationFailed("Utilisateur non trouvé", code="user_not_found")
 
         # IMPORTANT : On retire la vérification "if not user.is_active"
         # qui est présente dans la classe parente.
