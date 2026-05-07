@@ -40,15 +40,66 @@ class Healthcheck(APIView):
     """
     Healthcheck endpoint for the Authentication API.
 
-    Performs a simple check to ensure the application and database connection are operational.
+    This endpoint is used to verify that:
+        - The API service is running correctly
+        - The database connection is operational
 
-    :param request: HTTP GET request
-    :type request: rest_framework.request.Request
-    :return: JSON response with API name, version, and database connection status
-    :rtype: rest_framework.response.Response
+    It performs a simple database connection test and returns
+    information about the current application state.
+
+    Typical use cases:
+        - Monitoring
+        - Load balancer health probes
+        - Docker/Kubernetes health checks
+        - CI/CD validation
+        - Service uptime verification
+
+    Responses:
+        - HTTP 200:
+            Application and database are operational.
+
+        - HTTP 500:
+            Database connection failed.
     """
 
     def get(self, request):
+        """
+        Perform a healthcheck on the application and database.
+
+        This method attempts to establish a connection with the default
+        configured database. If the connection succeeds, the API is
+        considered healthy.
+
+        :param request:
+            Incoming HTTP GET request.
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing:
+                - application name
+                - API version
+                - current environment
+                - database connection status
+        :rtype:
+            rest_framework.response.Response
+
+        Success response example:
+            {
+                "name": "Authentication API",
+                "version": "1.0.0",
+                "environment": "dev",
+                "status": "Database connection established"
+            }
+
+        Error response example:
+            {
+                "name": "Authentication API",
+                "version": "1.0.0",
+                "environment": "dev",
+                "status": "Database connection failed"
+            }
+        """
         db_conn = connections["default"]
         try:
             cursor = db_conn.cursor()
@@ -120,19 +171,66 @@ class RegisterAPIView(APIView):
     """
     User registration endpoint.
 
-    Accepts user registration data and creates a new user account.
-    Returns access and refresh JWT tokens on successful registration.
+    This endpoint allows new users to create an account in the system.
 
-    POST:
-        Register a new user.
+    During the registration process:
+        - User data is validated using RegisterSerializer
+        - A new user account is created
+        - JWT access and refresh tokens are generated
+        - Tokens are returned immediately after successful registration
 
-    :param request: HTTP POST request with user registration data
-    :type request: rest_framework.request.Request
-    :return: JSON response with tokens or validation errors
-    :rtype: rest_framework.response.Response
+    Typical registration fields may include:
+        - username
+        - email
+        - password
+        - additional profile information
+
+    Responses:
+        - HTTP 201:
+            User successfully registered.
+
+        - HTTP 400:
+            Validation failed or invalid input data.
     """
 
     def post(self, request):
+        """
+        Register a new user account and generate JWT tokens.
+
+        This method validates the incoming registration data using
+        RegisterSerializer. If validation succeeds:
+            - A new user is created
+            - JWT refresh and access tokens are generated
+            - Authentication tokens are returned to the client
+
+        :param request:
+            Incoming HTTP POST request containing registration data.
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing:
+                - success message
+                - JWT access token
+                - JWT refresh token
+            or validation errors if registration fails.
+        :rtype:
+            rest_framework.response.Response
+
+        Success response example:
+            {
+                "message": "User registered successfully",
+                "access_token": "<jwt_access_token>",
+                "refresh_token": "<jwt_refresh_token>"
+            }
+
+        Error response example:
+            {
+                "email": [
+                    "This field must be unique."
+                ]
+            }
+        """
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
