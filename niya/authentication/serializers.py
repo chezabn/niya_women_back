@@ -79,7 +79,6 @@ class RegisterSerializer(serializers.ModelSerializer):
         validated_data.pop("password2")
         password = validated_data.pop("password")
         user = User(**validated_data)
-        user.is_active = False
         user.set_password(password)
         user.save()
         return user
