@@ -14,7 +14,9 @@ from .constants import (
     EMAIL_SUBJECT_VERIFICATION_REJECTED,
     EMAIL_BODY_VERIFICATION_REJECTED,
     EMAIL_SUBJECT_VERIFICATION_APPROVED,
-    EMAIL_BODY_VERIFICATION_APPROVED, EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST, EMAIL_BODY_NEW_VERIFICATION_REQUEST,
+    EMAIL_BODY_VERIFICATION_APPROVED,
+    EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
+    EMAIL_BODY_NEW_VERIFICATION_REQUEST,
 )
 from .models import IdentityVerificationRequest
 from .serializers import (
@@ -104,18 +106,28 @@ class SubmitIdentityVerificationView(APIView):
             obj = serializer.save(user=user)
             try:
                 admin_link = request.build_absolute_uri(
-                    f"/api/identification/admin/identity/{obj.id}/review/")
+                    f"/api/identification/admin/identity/{obj.id}/review/"
+                )
                 message_body = EMAIL_BODY_NEW_VERIFICATION_REQUEST.format(
                     username=user.username,
                     email=user.email,
                     created_at=obj.created_at.strftime("%d/%m/%Y à %H:%M"),
-                    id_card_url=obj.id_card_front.url if obj.id_card_front else "Non fourni",
-                    selfie_url=obj.selfie_with_id.url if obj.selfie_with_id else "Non fourni",
-                    admin_link=admin_link
+                    id_card_url=(
+                        obj.id_card_front.url if obj.id_card_front else "Non fourni"
+                    ),
+                    selfie_url=(
+                        obj.selfie_with_id.url if obj.selfie_with_id else "Non fourni"
+                    ),
+                    admin_link=admin_link,
                 )
 
                 from django.contrib.auth import get_user_model
-                admin_email_list = list(get_user_model().objects.filter(is_superuser=True).values_list('email', flat=True))
+
+                admin_email_list = list(
+                    get_user_model()
+                    .objects.filter(is_superuser=True)
+                    .values_list("email", flat=True)
+                )
 
                 send_mail(
                     subject=EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
@@ -129,7 +141,6 @@ class SubmitIdentityVerificationView(APIView):
             return Response(
                 {
                     "message": "Documents soumis avec succès. En attente de validation par l'admin.",
-
                     "id": obj.id,
                 },
                 status=status.HTTP_201_CREATED if not instance else status.HTTP_200_OK,

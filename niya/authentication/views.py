@@ -27,8 +27,13 @@ from .serializers import UserSerializer, RegisterSerializer
 __version__ = "1.0.0"
 __name__ = "Authentication API"
 
-from libs.errors import USER_NOT_FOUND, ACCOUNT_BLOCKED, ACCOUNT_BAN, ACCOUNT_LOCKED, PASSWORD_FAILED
-
+from libs.errors import (
+    USER_NOT_FOUND,
+    ACCOUNT_BLOCKED,
+    ACCOUNT_BAN,
+    ACCOUNT_LOCKED,
+    PASSWORD_FAILED,
+)
 
 
 class Healthcheck(APIView):
@@ -146,7 +151,103 @@ class RegisterAPIView(APIView):
 
 
 class LoginAPIView(TokenObtainPairView):
+    """
+    Authentication endpoint used to log users into the application.
+
+    This endpoint extends SimpleJWT's TokenObtainPairView in order to
+    provide custom authentication behaviors such as:
+
+    - Checking whether the username exists
+    - Limiting failed login attempts
+    - Temporarily locking accounts after multiple failures
+    - Detecting banned or disabled accounts
+    - Resetting failed login attempts after a successful login
+    - Returning custom API error messages
+
+    If authentication succeeds, a JWT access token and refresh token
+    are returned to the client.
+
+    Authentication flow:
+        1. Verify that the username exists
+        2. Check whether the account is temporarily locked
+        3. Check whether the account is banned/inactive
+        4. Authenticate the user credentials
+        5. Reset failed attempts if login succeeds
+        6. Increment failed attempts if authentication fails
+
+    Returns:
+        HTTP 200:
+            JWT access and refresh tokens
+
+        HTTP 401:
+            Invalid credentials
+
+        HTTP 403:
+            Account banned or disabled
+
+        HTTP 404:
+            User not found
+
+        HTTP 423:
+            Account temporarily locked
+    """
+
     def post(self, request, *args, **kwargs):
+        """
+        Authenticate a user and generate JWT tokens.
+
+        This method overrides the default SimpleJWT login behavior
+        to add advanced security checks and custom error handling.
+
+        Security features implemented:
+            - Username existence validation
+            - Temporary account lock mechanism
+            - Failed login attempt tracking
+            - Ban/inactive account detection
+            - Automatic reset of failed attempts on success
+
+        Request body:
+            {
+                "username": "example_user",
+                "password": "secure_password"
+            }
+
+        :param request:
+            Incoming HTTP request containing authentication credentials.
+        :type request:
+            rest_framework.request.Request
+
+        :param args:
+            Additional positional arguments.
+        :type args:
+            tuple
+
+        :param kwargs:
+            Additional keyword arguments.
+        :type kwargs:
+            dict
+
+        :return:
+            A JSON response containing JWT tokens or an error message.
+        :rtype:
+            rest_framework.response.Response
+
+        Possible responses:
+            - 200 OK:
+                Authentication successful.
+
+            - 401 Unauthorized:
+                Incorrect password or invalid credentials.
+
+            - 403 Forbidden:
+                User account is banned or disabled.
+
+            - 404 Not Found:
+                Username does not exist.
+
+            - 423 Locked:
+                Account temporarily locked after multiple failed attempts.
+        """
         username = request.data.get("username")
 
         # Check if username exists
@@ -164,7 +265,9 @@ class LoginAPIView(TokenObtainPairView):
             )
             return Response(
                 {
-                    "detail": ACCOUNT_BLOCKED.format(minutes_remaining=minutes_remaining),
+                    "detail": ACCOUNT_BLOCKED.format(
+                        minutes_remaining=minutes_remaining
+                    ),
                     "locked_until": user.locked_until,
                 },
                 status=status.HTTP_423_LOCKED,
