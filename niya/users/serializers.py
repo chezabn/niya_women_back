@@ -3,7 +3,13 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["bio"]
+
 class UserSerializer(serializers.ModelSerializer):
+    profile = UserProfileSerializer()
     class Meta:
         model = User
         fields = [
@@ -12,8 +18,8 @@ class UserSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
-            "bio",
             "email_verified",
+            "profile",
         ]
 
 class UserUpdateSerializer(serializers.ModelSerializer):
