@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from authentication.serializers import UserPreviewSerializer
+from users.serializers import UserPreviewSerializer
 from .models import Publication, Comment
 
 

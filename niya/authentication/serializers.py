@@ -3,43 +3,6 @@ from rest_framework import serializers
 from .models import User
 
 
-class UserSerializer(serializers.ModelSerializer):
-    """
-    Serializer for retrieving user profile information.
-
-    :class:`UserSerializer` serializes basic user fields including:
-    - ID
-    - Username
-    - Email
-    - First name
-    - Last name
-    - Bio
-
-    It is used for displaying user data in a secure, readable format.
-
-    :Meta:
-        model: :class:`User`
-        fields: ``["id", "username", "email", "first_name", "last_name", "bio", "email_verified"]``
-    """
-
-    class Meta:
-        model = User
-        fields = [
-            "id",
-            "username",
-            "email",
-            "first_name",
-            "last_name",
-            "bio",
-            "email_verified",
-        ]
-
-
-class UserPreviewSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "username"]
-
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)

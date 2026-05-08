@@ -3,7 +3,6 @@ import os
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import connections
-from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -22,7 +21,7 @@ from .constants import (
     EMAIL_SUBJECT_EMAIL_VERIFIED,
 )
 from .models import User
-from .serializers import UserSerializer, RegisterSerializer
+from .serializers import RegisterSerializer
 
 __version__ = "1.0.0"
 __name__ = "Authentication API"
@@ -121,48 +120,6 @@ class Healthcheck(APIView):
                 "status": "Database connection established",
             },
             status=status.HTTP_200_OK,
-        )
-
-
-class MyUserAPIView(APIView):
-    """
-    Authenticated user endpoint to retrieve, update, or delete the user account.
-
-    Requires a valid JWT token in the Authorization header.
-
-    GET:
-        Retrieve the authenticated user's information.
-
-    PATCH:
-        Partially update the authenticated user's information.
-
-    DELETE:
-        Delete the authenticated user's account.
-
-    :param request: HTTP request (GET, PATCH, DELETE)
-    :type request: rest_framework.request.Request
-    :return: JSON response with user data or confirmation message
-    :rtype: rest_framework.response.Response
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
-
-    def patch(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request):
-        user = request.user
-        user.delete()
-        return Response(
-            {"message": "Account deleted"}, status=status.HTTP_204_NO_CONTENT
         )
 
 
@@ -404,55 +361,6 @@ class LoginAPIView(TokenObtainPairView):
                 {"detail": PASSWORD_FAILED.format(e=e)},
                 status=status.HTTP_401_UNAUTHORIZED,
             )
-
-
-# Other
-class UsersAPIView(APIView):
-    def get(self, request):
-        users = User.objects.filter(is_superuser=False)
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
-
-
-class UserDetailAPIView(APIView):
-    """
-    Endpoint pour récupérer les détails d'une utilisatrice spécifique par son ID.
-
-    Cette vue permet à tout utilisateur (connecté ou non) de consulter le profil public
-    d'une autre utilisatrice. Si l'utilisateur consulte son propre profil, il pourrait
-    potentiellement avoir accès à des champs supplémentaires (à gérer dans le sérialiseur).
-
-    URL Pattern: /users/<int:pk>/
-    Method: GET
-
-    :param request: HTTP GET request
-    :type request: rest_framework.request.Request
-    :param pk: Primary Key (ID) de l'utilisatrice cible
-    :type pk: int
-    :return: JSON response contenant les données de l'utilisatrice ou une erreur 404
-    :rtype: rest_framework.response.Response
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk: int) -> Response:
-        """
-        Récupère une instance utilisateur basée sur l'ID fourni.
-
-        Utilise get_object_or_404 pour renvoyer automatiquement une 404 propre
-        si l'utilisateur n'existe pas, évitant ainsi de révéler des informations
-        sur la structure de la base de données.
-
-        :param request: La requête HTTP.
-        :param pk: L'identifiant unique de l'utilisatrice.
-        :return: Les données sérialisées de l'utilisatrice.
-        """
-        # Récupération sécurisée de l'objet ou levée d'une exception 404
-        user = get_object_or_404(User, pk=pk)
-
-        serializer = UserSerializer(user)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 # Views for verification email
