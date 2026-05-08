@@ -16,6 +16,16 @@ class UserSerializer(serializers.ModelSerializer):
             "email_verified",
         ]
 
+class UserUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = [
+            "first_name",
+            "last_name",
+            "bio",
+            "email",
+        ]
+
 
 class UserPreviewSerializer(serializers.ModelSerializer):
     class Meta:

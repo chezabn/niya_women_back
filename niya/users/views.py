@@ -3,6 +3,7 @@ import os
 from django.db import connections
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,6 +11,10 @@ from rest_framework.views import APIView
 __version__ = "1.0.0"
 __name__ = "Users API"
 
+from .serializers import UserSerializer, UserUpdateSerializer
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 class Healthcheck(APIView):
     """
@@ -98,26 +103,22 @@ class Healthcheck(APIView):
             status=status.HTTP_200_OK,
         )
 
-class MyUserAPIView(APIView):
+
+
+class MyUserAPIView(RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete the authenticated user's account.
+    """
+    serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+    def get_object(self):
+        return self.request.user
 
-    def patch(self, request):
-        serializer = UserSerializer(request.user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    def delete(self, request):
-        user = request.user
-        user.delete()
-        return Response(
-            {"message": "Account deleted"}, status=status.HTTP_204_NO_CONTENT
-        )
+    def get_serializer_class(self):
+        if self.request.method in ["PATCH", "PUT"]:
+            return UserUpdateSerializer
+        return UserSerializer
 
 # Other
 class UsersAPIView(APIView):
@@ -128,38 +129,8 @@ class UsersAPIView(APIView):
 
 
 class UserDetailAPIView(APIView):
-    """
-    Endpoint pour récupérer les détails d'une utilisatrice spécifique par son ID.
-
-    Cette vue permet à tout utilisateur (connecté ou non) de consulter le profil public
-    d'une autre utilisatrice. Si l'utilisateur consulte son propre profil, il pourrait
-    potentiellement avoir accès à des champs supplémentaires (à gérer dans le sérialiseur).
-
-    URL Pattern: /users/<int:pk>/
-    Method: GET
-
-    :param request: HTTP GET request
-    :type request: rest_framework.request.Request
-    :param pk: Primary Key (ID) de l'utilisatrice cible
-    :type pk: int
-    :return: JSON response contenant les données de l'utilisatrice ou une erreur 404
-    :rtype: rest_framework.response.Response
-    """
-
     permission_classes = [IsAuthenticated]
-
     def get(self, request, pk: int) -> Response:
-        """
-        Récupère une instance utilisateur basée sur l'ID fourni.
-
-        Utilise get_object_or_404 pour renvoyer automatiquement une 404 propre
-        si l'utilisateur n'existe pas, évitant ainsi de révéler des informations
-        sur la structure de la base de données.
-
-        :param request: La requête HTTP.
-        :param pk: L'identifiant unique de l'utilisatrice.
-        :return: Les données sérialisées de l'utilisatrice.
-        """
         # Récupération sécurisée de l'objet ou levée d'une exception 404
         user = get_object_or_404(User, pk=pk)
 
