@@ -1,0 +1,26 @@
+meta {
+  name: Update My User
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{URL}}/api/users/me/
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzNDIwMzU5LCJpYXQiOjE3NzgyMzYzNTksImp0aSI6IjgyYzExMjI0N2YyNjQ4MmViNWEwOGFmNDkzMGU0YjBlIiwidXNlcl9pZCI6NDB9.QBpSxFJrVq_ZmU-Lokozz2y-9KfS-914L2Jesu6vO_8
+}
+
+body:json {
+  {
+    "bio": "Bonjour, je suis nouvelle."
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
