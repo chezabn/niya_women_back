@@ -1,7 +1,7 @@
 import os
 
 from django.db import connections
-from django.shortcuts import get_object_or_404
+from django.db.models.query_utils import Q
 from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
@@ -141,10 +141,32 @@ class MyUserAPIView(APIView):
         )
 
 
-# Other
+# TODO Les classes ci dessous doivent avoir une permission plus élevé que le simple fiat is_active = True
 class UsersAPIView(ListAPIView):
     serializer_class = UserPreviewSerializer
     permission_classes = [IsAuthenticated]
-    def get_queryset(self):
-        return User.objects.exclude(pk=self.request.user.pk).filter(is_superuser=False, is_active=True)
 
+    def get_queryset(self):
+        return User.objects.exclude(pk=self.request.user.pk).filter(
+            is_superuser=False, is_active=True
+        )
+
+
+class UserSearchAPIView(ListAPIView):
+    """
+    Search users by username or bia.
+    """
+
+    serializer_class = UserPreviewSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = User.objects.exclude(pk=self.request.user.pk).filter(
+            is_superuser=False, is_active=True
+        )
+        query = self.request.query_params.get("q")
+        if query:
+            queryset = queryset.filter(
+                Q(username__icontains=query) | Q(profile__bio__icontains=query)
+            )
+        return queryset
