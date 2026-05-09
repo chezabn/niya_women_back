@@ -6,3 +6,4 @@ ACCOUNT_BAN = (
 ACCOUNT_DEACTIVATED = "Your account has been deactivated"
 ACCOUNT_LOCKED = "Too many failed attempts. Account locked for 10 minutes."
 PASSWORD_FAILED = "Incorrect username or password: {e}"
+EMAIL_ALREADY_REGISTERED = "Email address already registered"

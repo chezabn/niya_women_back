@@ -3,7 +3,6 @@ import os
 from django.db import connections
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.generics import RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -14,7 +13,10 @@ __name__ = "Users API"
 from .serializers import UserSerializer, UserUpdateSerializer
 from django.contrib.auth import get_user_model
 
+from libs.errors import ACCOUNT_DEACTIVATED
+
 User = get_user_model()
+
 
 class Healthcheck(APIView):
     """
@@ -104,21 +106,39 @@ class Healthcheck(APIView):
         )
 
 
-
-class MyUserAPIView(RetrieveUpdateDestroyAPIView):
+class MyUserAPIView(APIView):
     """
     Retrieve, update or delete the authenticated user's account.
     """
-    serializer_class = UserSerializer
+
     permission_classes = [IsAuthenticated]
 
-    def get_object(self):
-        return self.request.user
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    def get_serializer_class(self):
-        if self.request.method in ["PATCH", "PUT"]:
-            return UserUpdateSerializer
-        return UserSerializer
+    def patch(self, request):
+        serializer = UserUpdateSerializer(
+            instance=request.user,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(
+                UserSerializer(request.user).data, status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        user = request.user
+        user.is_active = False
+        user.save()
+        return Response(
+            {"details": ACCOUNT_DEACTIVATED}, status=status.HTTP_204_NO_CONTENT
+        )
+
 
 # Other
 class UsersAPIView(APIView):
@@ -130,6 +150,7 @@ class UsersAPIView(APIView):
 
 class UserDetailAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def get(self, request, pk: int) -> Response:
         # Récupération sécurisée de l'objet ou levée d'une exception 404
         user = get_object_or_404(User, pk=pk)
