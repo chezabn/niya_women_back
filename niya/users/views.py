@@ -148,14 +148,3 @@ class UsersAPIView(ListAPIView):
     def get_queryset(self):
         return User.objects.exclude(pk=self.request.user.pk).filter(is_superuser=False, is_active=True)
 
-
-class UserDetailAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request, pk: int) -> Response:
-        # Récupération sécurisée de l'objet ou levée d'une exception 404
-        user = get_object_or_404(User, pk=pk)
-
-        serializer = UserSerializer(user)
-
-        return Response(serializer.data, status=status.HTTP_200_OK)
