@@ -1,12 +1,12 @@
 meta {
-  name: Get My User
+  name: Delete My User
   type: http
-  seq: 2
+  seq: 3
 }
 
-get {
+delete {
   url: {{URL}}/api/users/me/
-  body: none
+  body: json
   auth: inherit
 }
 
