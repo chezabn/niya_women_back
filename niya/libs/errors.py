@@ -3,5 +3,6 @@ ACCOUNT_BLOCKED = "Your account has been temporarily locked for security reasons
 ACCOUNT_BAN = (
     "Your account has been deactivated by the administration. Please contact support."
 )
+ACCOUNT_DEACTIVATED = "Your account has been deactivated"
 ACCOUNT_LOCKED = "Too many failed attempts. Account locked for 10 minutes."
 PASSWORD_FAILED = "Incorrect username or password: {e}"
