@@ -3,6 +3,7 @@ import os
 from django.db import connections
 from django.shortcuts import get_object_or_404
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -10,7 +11,7 @@ from rest_framework.views import APIView
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
@@ -141,11 +142,11 @@ class MyUserAPIView(APIView):
 
 
 # Other
-class UsersAPIView(APIView):
-    def get(self, request):
-        users = User.objects.filter(is_superuser=False)
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
+class UsersAPIView(ListAPIView):
+    serializer_class = UserPreviewSerializer
+    permission_classes = [IsAuthenticated]
+    def get_queryset(self):
+        return User.objects.exclude(pk=self.request.user.pk).filter(is_superuser=False, is_active=True)
 
 
 class UserDetailAPIView(APIView):

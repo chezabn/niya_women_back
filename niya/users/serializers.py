@@ -52,4 +52,4 @@ class UserUpdateSerializer(serializers.Serializer):
 class UserPreviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ["id", "username"]
+        fields = ["id", "username", "identity_verified", "profile"]
