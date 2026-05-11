@@ -375,9 +375,76 @@ class LoginAPIView(TokenObtainPairView):
 
 # Views for verification email
 class SendVerificationCodeView(APIView):
+    """
+    Endpoint used to send an email verification code to the authenticated user.
+
+    This endpoint allows authenticated users to request a verification
+    code in order to confirm ownership of their email address.
+
+    Before sending the code, several validations are performed:
+        - The user must be authenticated
+        - The email must not already be verified
+        - The user account must contain a valid email address
+
+    If validation succeeds:
+        - A temporary verification code is generated
+        - The code expiration time is set
+        - An email containing the verification code is sent
+
+    Security notes:
+        - The verification code is temporary
+        - The code expiration is handled at model level
+        - Only authenticated users can access this endpoint
+
+    Responses:
+        - HTTP 200:
+            Verification code successfully sent.
+
+        - HTTP 400:
+            Email already verified,
+            missing email,
+            or email sending failure.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Generate and send an email verification code.
+
+        This method generates a temporary verification code for the
+        authenticated user and sends it to the user's email address.
+
+        Validation flow:
+            1. Check whether the email is already verified
+            2. Check whether the user has an email address
+            3. Generate a verification code
+            4. Send the verification email
+
+        :param request:
+            Incoming HTTP POST request.
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing a success or error message.
+        :rtype:
+            rest_framework.response.Response
+
+        Success response example:
+            {
+                "detail": "Verification code sent successfully."
+            }
+
+        Error response examples:
+            {
+                "detail": "Email already verified."
+            }
+
+            {
+                "detail": "No email associated with this account."
+            }
+        """
         user = request.user
         if user.email_verified:
             return Response(
@@ -410,9 +477,76 @@ class SendVerificationCodeView(APIView):
 
 
 class VerifyEmailView(APIView):
+    """
+    Endpoint used to verify a user's email address.
+
+    This endpoint allows authenticated users to validate their email
+    address using the verification code previously sent to them.
+
+    Verification flow:
+        1. Ensure a verification code is provided
+        2. Validate the code and expiration date
+        3. Mark the email as verified
+        4. Remove the verification code from the database
+        5. Send a confirmation email
+
+    Security notes:
+        - Verification codes are temporary
+        - Expired codes are rejected
+        - Only authenticated users can verify their email
+
+    Responses:
+        - HTTP 200:
+            Email successfully verified.
+
+        - HTTP 400:
+            Missing code,
+            invalid code,
+            expired code,
+            or email sending failure.
+    """
+
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
+        """
+        Verify the authenticated user's email address.
+
+        This method validates the verification code provided by the user.
+        If the code is valid:
+            - The email is marked as verified
+            - Verification fields are cleared
+            - A confirmation email is sent
+
+        :param request:
+            Incoming HTTP POST request containing the verification code.
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing a success or error message.
+        :rtype:
+            rest_framework.response.Response
+
+        Request body example:
+            {
+                "code": "123456"
+            }
+
+        Success response example:
+            {
+                "detail": "Email verified successfully."
+            }
+
+        Error response examples:
+            {
+                "detail": "No verification code provided."
+            }
+
+            {
+                "detail": "Invalid or expired verification code."
+            }
+        """
         user = request.user
         code = request.data.get("code")
         if not code:
@@ -452,27 +586,75 @@ class VerifyEmailView(APIView):
 # Views for reset password
 class RequestPasswordResetView(APIView):
     """
-    Endpoint pour demander la réinitialisation du mot de passe.
+    Endpoint used to request a password reset code.
 
-    Accepte une adresse email, vérifie si l'utilisateur existe,
-    génère un code de sécurité et l'envoie par email.
+    This endpoint allows users to request a temporary password reset
+    code by providing their email address.
 
-    NOTE DE SÉCURITÉ : Pour éviter l'énumération d'utilisateurs,
-    cette API renvoie toujours un succès même si l'email n'existe pas,
-    mais n'envoie l'email que si l'utilisateur existe.
+    Security behavior:
+        - The endpoint always returns the same success response,
+          even if the email does not exist.
+        - This prevents user enumeration attacks.
 
-    POST:
-        {"email": "utilisateur@example.com"}
+    Password reset flow:
+        1. Validate that an email is provided
+        2. Search for the associated user
+        3. Generate a temporary reset code
+        4. Send the reset code by email
 
-    :param request: HTTP POST request
-    :type request: rest_framework.request.Request
-    :return: Message de succès générique
-    :rtype: rest_framework.response.Response
+    Notes:
+        - The reset code expiration is handled at model level
+        - This endpoint is publicly accessible
+        - Email sending failures are intentionally hidden from clients
+
+    Responses:
+        - HTTP 200:
+            Generic success response.
+
+        - HTTP 400:
+            Missing email address.
     """
 
     permission_classes = []  # Accessible sans authentification
 
     def post(self, request):
+        """
+        Generate and send a password reset code.
+
+        This method validates the provided email address and,
+        if a matching user exists, generates a temporary reset code
+        and sends it by email.
+
+        For security reasons:
+            - The response is always identical whether the user exists or not
+            - Internal email sending errors are not exposed
+
+        :param request:
+            Incoming HTTP POST request containing the user's email.
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing a generic success or validation message.
+        :rtype:
+            rest_framework.response.Response
+
+        Request body example:
+            {
+                "email": "user@example.com"
+            }
+
+        Success response example:
+            {
+                "detail": "If this email exists, a reset code has been sent."
+            }
+
+        Error response example:
+            {
+                "detail": "Email is required."
+            }
+        """
+
         email = request.data.get("email")
         if not email:
             return Response(
@@ -510,26 +692,91 @@ class RequestPasswordResetView(APIView):
 
 class ConfirmPasswordResetView(APIView):
     """
-    Endpoint pour confirmer le code et définir le nouveau mot de passe.
+    Endpoint used to confirm a password reset operation.
 
-    Vérifie le code reçu par email et met à jour le mot de passe si valide.
+    This endpoint validates:
+        - The user's email
+        - The reset code
+        - The new password
 
-    POST:
-        {
-            "email": "utilisateur@example.com",
-            "code": "123456",
-            "new_password": "NouveauMotDePasseSecurise"
-        }
+    If validation succeeds:
+        - The user's password is updated
+        - Reset codes are cleared
+        - Failed login attempts are reset
 
-    :param request: HTTP POST request
-    :type request: rest_framework.request.Request
-    :return: Succès ou erreurs de validation
-    :rtype: rest_framework.response.Response
+    Security features:
+        - Reset codes are temporary
+        - Expired codes are rejected
+        - Password complexity is validated
+        - Login lock state is reset after success
+
+    Responses:
+        - HTTP 200:
+            Password successfully updated.
+
+        - HTTP 400:
+            Missing fields,
+            invalid code,
+            invalid user,
+            or insecure password.
     """
 
     permission_classes = []  # Accessible sans authentification
 
     def post(self, request):
+        """
+        Validate a password reset code and update the password.
+
+        This method verifies the provided reset code and updates
+        the user's password if all validations succeed.
+
+        Validation flow:
+            1. Validate required fields
+            2. Validate password complexity
+            3. Check that the user exists
+            4. Validate the reset code
+            5. Update the password
+            6. Clear reset-related fields
+            7. Reset failed login attempts
+
+        :param request:
+            Incoming HTTP POST request containing:
+                - email
+                - reset code
+                - new password
+        :type request:
+            rest_framework.request.Request
+
+        :return:
+            JSON response containing a success or error message.
+        :rtype:
+            rest_framework.response.Response
+
+        Request body example:
+            {
+                "email": "user@example.com",
+                "code": "123456",
+                "new_password": "StrongPassword123!"
+            }
+
+        Success response example:
+            {
+                "detail": "Password changed successfully."
+            }
+
+        Error response examples:
+            {
+                "detail": "Missing required information."
+            }
+
+            {
+                "detail": "Password is not secure enough."
+            }
+
+            {
+                "detail": "Invalid or expired code."
+            }
+        """
         email = request.data.get("email")
         code = request.data.get("code")
         new_password = request.data.get("new_password")
