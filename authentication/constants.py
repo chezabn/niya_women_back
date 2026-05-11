@@ -55,3 +55,6 @@ L'équipe Niyya 🌸
 # --- Autres constantes ---
 APP_NAME = "Niyya Women: {service}"
 SUPPORT_EMAIL = "support@niyya-women.com"
+
+
+# --- Logs ---

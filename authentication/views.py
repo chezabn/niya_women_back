@@ -32,6 +32,16 @@ from libs.errors import (
     ACCOUNT_BAN,
     ACCOUNT_LOCKED,
     PASSWORD_FAILED,
+    INVALID_CODE,
+    MISSING_CODE,
+    EMAIL_VERIFIED,
+    SUCCESSFUL_EMAIL,
+    MISSING_EMAIL,
+    CODE_SENT,
+    PASSWORD_CHANGED,
+    MISSING_INFORMATION,
+    PASSWORD_NOT_SECURED,
+    USER_OR_CODE_NOT_MATCH,
 )
 
 
@@ -176,7 +186,7 @@ class RegisterAPIView(APIView):
 
         Success response example:
             {
-                "message": "User registered successfully",
+                "detail": "User registered successfully",
                 "access_token": "<jwt_access_token>",
                 "refresh_token": "<jwt_refresh_token>"
             }
@@ -196,7 +206,7 @@ class RegisterAPIView(APIView):
             refresh_token = str(refresh.access_token)
             return Response(
                 {
-                    "message": "User registered successfully",
+                    "detail": "User registered successfully",
                     "access": access_token,
                     "refresh": refresh_token,
                 },
@@ -371,12 +381,12 @@ class SendVerificationCodeView(APIView):
         user = request.user
         if user.email_verified:
             return Response(
-                {"message": "Email already verified"},
+                {"detail": EMAIL_VERIFIED},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         if not user.email:
             return Response(
-                {"message": "No email associated with this account"},
+                {"detail": MISSING_EMAIL},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -392,9 +402,9 @@ class SendVerificationCodeView(APIView):
                 fail_silently=False,
             )
         except Exception as e:
-            return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
         return Response(
-            {"message": "Code envoyé vers votre adresse mail"},
+            {"detail": CODE_SENT},
             status=status.HTTP_200_OK,
         )
 
@@ -407,9 +417,8 @@ class VerifyEmailView(APIView):
         code = request.data.get("code")
         if not code:
             return Response(
-                {"message": "No code provided"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": MISSING_CODE}, status=status.HTTP_400_BAD_REQUEST
             )
-
         if user.is_verification_code_valid(code):
             user.email_verified = True
             user.email_verification_code = None
@@ -432,13 +441,11 @@ class VerifyEmailView(APIView):
                     fail_silently=False,
                 )
             except Exception as e:
-                return Response({"message": str(e)}, status=status.HTTP_400_BAD_REQUEST)
-            return Response(
-                {"message": "Email verified successfully"}, status=status.HTTP_200_OK
-            )
+                return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": SUCCESSFUL_EMAIL}, status=status.HTTP_200_OK)
         else:
             return Response(
-                {"message": "Code invalide"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": INVALID_CODE}, status=status.HTTP_400_BAD_REQUEST
             )
 
 
@@ -467,10 +474,9 @@ class RequestPasswordResetView(APIView):
 
     def post(self, request):
         email = request.data.get("email")
-
         if not email:
             return Response(
-                {"message": "Email est requis"}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": MISSING_EMAIL}, status=status.HTTP_400_BAD_REQUEST
             )
 
         # Recherche de l'utilisateur
@@ -497,9 +503,7 @@ class RequestPasswordResetView(APIView):
 
                 # Réponse générique pour ne pas révéler si l'email existe ou non
         return Response(
-            {
-                "message": "Si cet email est enregistré chez nous, vous recevrez un code de réinitialisation sous peu."
-            },
+            {"detail": CODE_SENT},
             status=status.HTTP_200_OK,
         )
 
@@ -533,14 +537,14 @@ class ConfirmPasswordResetView(APIView):
         # Validation des champs obligatoires
         if not all([email, code, new_password]):
             return Response(
-                {"message": "Tous les champs (email, code, new_password) sont requis."},
+                {"detail": MISSING_INFORMATION},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Vérification de la complexité du mot de passe (optionnel mais recommandé)
         if len(new_password) < 8:
             return Response(
-                {"message": "Le mot de passe doit contenir au moins 8 caractères."},
+                {"detail": PASSWORD_NOT_SECURED},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -548,16 +552,14 @@ class ConfirmPasswordResetView(APIView):
 
         if not user:
             return Response(
-                {"message": "Utilisateur non trouvé ou code invalide."},
+                {"detail": USER_OR_CODE_NOT_MATCH},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         # Vérification du code
         if not user.is_password_reset_code_valid(code):
             return Response(
-                {
-                    "message": "Code invalide ou expiré. Veuillez recommencer la demande."
-                },
+                {"detail": INVALID_CODE},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -579,8 +581,6 @@ class ConfirmPasswordResetView(APIView):
         )
 
         return Response(
-            {
-                "message": "Mot de passe réinitialisé avec succès. Vous pouvez maintenant vous connecter."
-            },
+            {"detail": PASSWORD_CHANGED},
             status=status.HTTP_200_OK,
         )
