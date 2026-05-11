@@ -4,15 +4,25 @@ from rest_framework import status
 from .models import User
 
 
-class RegisterTests(APITestCase):
+class HealthcheckTest(APITestCase):
+    def test_healthcheck(self):
+        response = self.client.get(reverse("healthcheck_auth_api"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("name", response.data)
 
+
+class RegisterTests(APITestCase):
     def setUp(self):
         self.url = reverse("register_api")
 
         self.valid_payload = {
             "username": "testuser",
             "email": "test@example.com",
-            "password": "StrongPassword123!"
+            "password": "StrongPassword123!",
+            "password2": "StrongPassword123!",
+            "first_name": "test",
+            "last_name": "test",
+            "accept_cgu": True,
         }
 
     # ------------------------
@@ -31,9 +41,7 @@ class RegisterTests(APITestCase):
     # FAILURE CASE: invalid data
     # ------------------------
     def test_register_missing_fields(self):
-        payload = {
-            "username": ""
-        }
+        payload = {"username": ""}
 
         response = self.client.post(self.url, payload)
 
