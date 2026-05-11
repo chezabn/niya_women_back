@@ -114,13 +114,29 @@ class LoginTests(APITestCase):
         assert user.failed_login_attempts == 0
         assert user.is_active
 
-    def test_login_false_password(self):
+    def test_login_account_will_locked(self):
         valid_payload = {
             "username": "testuser",
             "password": "False",
         }
-        response = self.client.post(self.url, valid_payload)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-        self.assertIn("detail", response.data)
         user = User.objects.get(username="testuser")
-        assert user.failed_login_attempts == 1
+        user.failed_login_attempts = 4
+        user.save()
+        response = self.client.post(self.url, valid_payload)
+        user.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_423_LOCKED)
+        self.assertIn("detail", response.data)
+        self.assertTrue(user.is_account_locked())
+        assert user.failed_login_attempts == 5
+
+
+def test_login_wrong_password(self):
+    valid_payload = {
+        "username": "testuser",
+        "password": "False",
+    }
+    response = self.client.post(self.url, valid_payload)
+    self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+    self.assertIn("detail", response.data)
+    user = User.objects.get(username="testuser")
+    assert user.failed_login_attempts == 1
