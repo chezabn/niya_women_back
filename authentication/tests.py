@@ -32,8 +32,8 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, self.valid_payload)
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("access_token", response.data)
-        self.assertIn("refresh_token", response.data)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
 
         self.assertTrue(User.objects.filter(username="testuser").exists())
 
