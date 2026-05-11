@@ -1,0 +1,20 @@
+meta {
+  name: Get My User
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{URL}}/api/users/me/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzgzNTEwNzE0LCJpYXQiOjE3NzgzMjY3MTQsImp0aSI6IjliYzI3NjEzOTRkZDQwNzc5NDQ4M2IzMDYwN2JjYjVlIiwidXNlcl9pZCI6NDN9.5lOQfXG4NL4-QxhZctxUGCqSjaeQBKSsmlTeC8OGSFA
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
