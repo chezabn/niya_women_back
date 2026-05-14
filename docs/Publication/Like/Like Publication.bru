@@ -1,13 +1,17 @@
 meta {
-  name: Get All Publications
+  name: Like Publication
   type: http
-  seq: 2
+  seq: 1
 }
 
-get {
-  url: {{URL}}/api/publications/publications/
+post {
+  url: {{URL}}/api/publications/publications/:id/like/
   body: none
   auth: inherit
+}
+
+params:path {
+  id: 2
 }
 
 headers {
