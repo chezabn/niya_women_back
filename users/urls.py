@@ -1,0 +1,10 @@
+from django.urls import path
+
+from .views import Healthcheck, MyUserAPIView, UsersAPIView, UserSearchAPIView
+
+urlpatterns = [
+    path("healthcheck/", Healthcheck.as_view(), name="healthcheck_auth_api"),
+    path("me/", MyUserAPIView.as_view(), name="my_user"),
+    path("all/", UsersAPIView.as_view(), name="users"),
+    path("search/", UserSearchAPIView.as_view(), name="search_user"),
+]
