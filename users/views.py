@@ -15,6 +15,7 @@ from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerial
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
+from libs.permissions import IsFullyAuthenticated
 
 User = get_user_model()
 
@@ -141,10 +142,9 @@ class MyUserAPIView(APIView):
         )
 
 
-# TODO Les classes ci dessous doivent avoir une permission plus élevé que le simple fiat is_active = True
 class UsersAPIView(ListAPIView):
     serializer_class = UserPreviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         return User.objects.exclude(pk=self.request.user.pk).filter(
@@ -158,7 +158,7 @@ class UserSearchAPIView(ListAPIView):
     """
 
     serializer_class = UserPreviewSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
         queryset = User.objects.exclude(pk=self.request.user.pk).filter(
