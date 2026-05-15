@@ -11,7 +11,6 @@ from .models import (
     PublicationLike,
 )
 from .pagination import FeedPagination
-
 from .serializers import (
     CommentSerializer,
     PublicationCreateSerializer,
