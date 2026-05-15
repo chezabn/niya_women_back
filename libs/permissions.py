@@ -29,3 +29,17 @@ class IsFullyAuthenticated(BasePermission):
         if not mail_verification:
             return False
         return True
+
+
+class IsPublicationOwner(BasePermission):
+    """
+    Allows access only to publication owners.
+    """
+
+    def has_object_permission(
+        self,
+        request,
+        view,
+        obj,
+    ) -> bool:
+        return obj.author == request.user
