@@ -1,8 +1,8 @@
-from rest_framework import serializers
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 
-from .models import UserProfile
 from libs.errors import EMAIL_ALREADY_REGISTERED
+from .models import UserProfile
 
 User = get_user_model()
 

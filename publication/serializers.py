@@ -1,7 +1,6 @@
 from rest_framework import serializers
 
 from users.serializers import UserPreviewSerializer
-
 from .models import (
     Comment,
     Publication,

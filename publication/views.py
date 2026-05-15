@@ -1,24 +1,19 @@
 from django.shortcuts import get_object_or_404
-
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from libs.permissions import IsFullyAuthenticated
-
 from .models import (
     Comment,
     Publication,
     PublicationLike,
 )
-
 from .pagination import FeedPagination
-
 from .permissions import (
     IsPublicationOwner,
 )
-
 from .serializers import (
     CommentSerializer,
     PublicationCreateSerializer,
