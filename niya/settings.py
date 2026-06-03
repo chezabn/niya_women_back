@@ -43,6 +43,7 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "niwo.alwaysdata.net",
     "www.niwo.alwaysdata.net",
+    "192.168.1.43"
 ]
 
 
