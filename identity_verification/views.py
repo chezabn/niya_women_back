@@ -21,7 +21,7 @@ from .constants import (
 from .models import IdentityVerificationRequest
 from .serializers import (
     VerificationRequestSerializer,
-    AdminVerificationReviewSerializer,
+    AdminVerificationReviewSerializer, IdentityVerificationDetailSerializer,
 )
 
 
@@ -216,3 +216,20 @@ class AdminReviewIdentityView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class ReviewIdentityView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, pk):
+        verification_request = get_object_or_404(
+            IdentityVerificationRequest,
+            pk=pk,
+        )
+
+        serializer = IdentityVerificationDetailSerializer(
+            verification_request
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
