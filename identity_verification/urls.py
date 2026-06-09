@@ -5,7 +5,7 @@ from .views import (
     Healthcheck,
     # Verification identity
     SubmitIdentityVerificationView,
-    AdminReviewIdentityView,
+    AdminReviewIdentityView, ReviewIdentityView,
 )
 
 urlpatterns = [
@@ -22,4 +22,9 @@ urlpatterns = [
         AdminReviewIdentityView.as_view(),
         name="admin_review_identity",
     ),
+    path(
+        "identity/<int:pk>/",
+        ReviewIdentityView.as_view(),
+        name="review_identity",
+    )
 ]
