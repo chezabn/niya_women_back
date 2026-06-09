@@ -5,7 +5,7 @@ from .views import (
     Healthcheck,
     # Verification identity
     SubmitIdentityVerificationView,
-    AdminReviewIdentityView, ReviewIdentityView,
+    AdminReviewIdentityView, AdminReviewIdentityView, ReviewIdentityView,
 )
 
 urlpatterns = [
