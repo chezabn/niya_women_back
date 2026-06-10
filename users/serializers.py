@@ -8,14 +8,23 @@ User = get_user_model()
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
+    # TODO Ajouter un avatar
+    post_count = serializers.SerializerMethodField()
     class Meta:
         model = UserProfile
-        fields = ["bio"]
+        fields = [
+            "bio",
+            "post_count",
+            ]
+
+    def get_post_count(self, obj):
+        if obj.user.publications.exists():
+            return obj.user.publications.count()
+        return 0
 
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
-
     class Meta:
         model = User
         fields = [
