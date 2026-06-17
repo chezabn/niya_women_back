@@ -1,6 +1,7 @@
 import os
 
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.db import connections
 from django.utils import timezone
@@ -343,12 +344,14 @@ class LoginAPIView(TokenObtainPairView):
             if user.account_deactivated_by_user:
                 return Response(
                     {
+                        "code": "ACCOUNT_DEACTIVATED",
                         "detail": ACCOUNT_DEACTIVATED,
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
             return Response(
                 {
+                    "code": "ACCOUNT_BANNED",
                     "detail": ACCOUNT_BAN,
                 },
                 status=status.HTTP_403_FORBIDDEN,
@@ -377,6 +380,71 @@ class LoginAPIView(TokenObtainPairView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+
+class ReactivateAccountAPIView(APIView):
+    """
+    Reactivate a previously deactivated account.
+
+    The user must provide valid credentials.
+    If the account was voluntarily deactivated, it will be restored
+    and new JWT tokens will be returned.
+
+    Request:
+    {
+        "username": "my_username",
+        "password": "my_password"
+    }
+
+    Response:
+    {
+        "access": "...",
+        "refresh": "..."
+    }
+    """
+
+    permission_classes = []
+
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if not username or not password:
+            return Response(
+                {
+                    "detail": "Username and password are required."
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            user = User.objects.get(username=username)
+
+        except User.DoesNotExist:
+            return Response(
+                {
+                    "detail": USER_NOT_FOUND,
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        if not user.account_deactivated_by_user:
+            return Response(
+                {
+                    "detail": "This account cannot be reactivated.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user.is_active = True
+        user.account_deactivated_by_user = False
+        user.save()
+
+        return Response(
+            {
+                "detail": "Account Reactivated",
+            },
+            status=status.HTTP_200_OK,
+        )
 
 # Views for verification email
 class SendVerificationCodeView(APIView):
