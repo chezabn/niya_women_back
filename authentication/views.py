@@ -41,7 +41,7 @@ from libs.errors import (
     PASSWORD_CHANGED,
     MISSING_INFORMATION,
     PASSWORD_NOT_SECURED,
-    USER_OR_CODE_NOT_MATCH,
+    USER_OR_CODE_NOT_MATCH, ACCOUNT_DEACTIVATED,
 )
 
 
@@ -340,14 +340,19 @@ class LoginAPIView(TokenObtainPairView):
 
         # Check if account is active
         if not user.is_active:
-            if user.email_verified and getattr(user, "identity_verified", False):
+            if user.account_deactivated_by_user:
                 return Response(
                     {
-                        "detail": ACCOUNT_BAN,
+                        "detail": ACCOUNT_DEACTIVATED,
                     },
                     status=status.HTTP_403_FORBIDDEN,
                 )
-            pass
+            return Response(
+                {
+                    "detail": ACCOUNT_BAN,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         # If all is good, user can log in
         try:
