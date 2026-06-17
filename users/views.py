@@ -136,6 +136,7 @@ class MyUserAPIView(APIView):
     def delete(self, request):
         user = request.user
         user.is_active = False
+        user.account_deactivated_by_user = True
         user.save()
         return Response(
             {"details": ACCOUNT_DEACTIVATED}, status=status.HTTP_204_NO_CONTENT

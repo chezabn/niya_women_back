@@ -15,13 +15,12 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
     email_verification_code = models.CharField(max_length=6, null=True, blank=True)
     email_verification_code_expires = models.DateTimeField(null=True, blank=True)
-
+    account_deactivated_by_user = models.BooleanField(default=False)
     # Attribut pour la limitation des tentatives
     failed_login_attempts = models.IntegerField(default=0)
     last_failed_login = models.DateTimeField(null=True, blank=True, default=None)
     locked_until = models.DateTimeField(null=True, blank=True)
     require_password_reset = models.BooleanField(default=False)
-
     # Attribut pour la réinitialisation du mot de passe
     password_reset_code = models.CharField(max_length=6, null=True, blank=True)
     password_reset_code_expires = models.DateTimeField(null=True, blank=True)

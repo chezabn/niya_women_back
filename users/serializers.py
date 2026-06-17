@@ -37,6 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
             "email_verified",
             "identity_verified",
             "is_active",
+            "account_deactivated_by_user",
 
             "is_staff",
             "is_superuser",
