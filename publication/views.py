@@ -1,16 +1,30 @@
+from django.db import transaction
 from django.shortcuts import get_object_or_404
+
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.parsers import (
+    MultiPartParser,
+    FormParser,
+)
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from libs.permissions import IsFullyAuthenticated, IsPublicationOwner
+from libs.permissions import (
+    IsFullyAuthenticated,
+    IsPublicationOwner,
+)
+
 from .models import (
     Comment,
     Publication,
     PublicationLike,
+    PublicationMedia,
 )
+
 from .pagination import FeedPagination
+
 from .serializers import (
     CommentSerializer,
     PublicationCreateSerializer,
@@ -20,18 +34,25 @@ from .serializers import (
 
 
 class PublicationViewSet(ModelViewSet):
-    permission_classes = [IsFullyAuthenticated]
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
+
+    parser_classes = [
+        MultiPartParser,
+        FormParser,
+    ]
 
     pagination_class = FeedPagination
 
     queryset = (
-        Publication.objects.select_related("author")
+        Publication.objects
+        .select_related("author")
         .prefetch_related(
             "medias",
             "likes",
             "comments",
         )
-        .all()
     )
 
     def get_permissions(self):
@@ -45,7 +66,9 @@ class PublicationViewSet(ModelViewSet):
                 IsPublicationOwner(),
             ]
 
-        return [IsFullyAuthenticated()]
+        return [
+            IsFullyAuthenticated(),
+        ]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -61,11 +84,60 @@ class PublicationViewSet(ModelViewSet):
             "request": self.request,
         }
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    @transaction.atomic
+    def create(self, request, *args, **kwargs):
+        serializer = PublicationCreateSerializer(
+            data=request.data,
+        )
 
-    def perform_update(self, serializer):
-        serializer.save(is_edited=True)
+        serializer.is_valid(
+            raise_exception=True,
+        )
+
+        files = serializer.validated_data.pop(
+            "files",
+            [],
+        )
+
+        publication = serializer.save(
+            author=request.user,
+        )
+
+        for index, file in enumerate(files):
+            content_type = getattr(
+                file,
+                "content_type",
+                "",
+            )
+
+            media_type = (
+                PublicationMedia.MediaType.VIDEO
+                if content_type.startswith("video/")
+                else PublicationMedia.MediaType.IMAGE
+            )
+
+            PublicationMedia.objects.create(
+                publication=publication,
+                file=file,
+                media_type=media_type,
+                order=index,
+            )
+
+        return Response(
+            PublicationDetailSerializer(
+                publication,
+                context=self.get_serializer_context(),
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    def perform_update(
+        self,
+        serializer,
+    ):
+        serializer.save(
+            is_edited=True,
+        )
 
     @action(
         detail=True,
@@ -75,19 +147,25 @@ class PublicationViewSet(ModelViewSet):
     def like(self, request, pk=None):
         publication = self.get_object()
 
-        like, created = PublicationLike.objects.get_or_create(
-            user=request.user,
-            publication=publication,
+        like, created = (
+            PublicationLike.objects.get_or_create(
+                user=request.user,
+                publication=publication,
+            )
         )
 
         if not created:
             return Response(
-                {"detail": "Already liked."},
+                {
+                    "detail": "Already liked."
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         return Response(
-            {"detail": "Publication liked."},
+            {
+                "detail": "Publication liked."
+            },
             status=status.HTTP_201_CREATED,
         )
 
@@ -99,45 +177,74 @@ class PublicationViewSet(ModelViewSet):
     def unlike(self, request, pk=None):
         publication = self.get_object()
 
-        deleted_count, _ = PublicationLike.objects.filter(
-            user=request.user,
-            publication=publication,
-        ).delete()
+        deleted_count, _ = (
+            PublicationLike.objects.filter(
+                user=request.user,
+                publication=publication,
+            ).delete()
+        )
 
         if deleted_count == 0:
             return Response(
-                {"detail": "Like not found."},
+                {
+                    "detail": "Like not found."
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         return Response(
-            {"detail": "Publication unliked."},
+            {
+                "detail": "Publication unliked."
+            },
             status=status.HTTP_204_NO_CONTENT,
         )
 
 
 class CommentViewSet(ModelViewSet):
-    permission_classes = [IsFullyAuthenticated]
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
 
     serializer_class = CommentSerializer
 
-    queryset = Comment.objects.select_related(
-        "author",
-        "publication",
-    ).all()
+    def get_queryset(self):
+        publication_id = self.kwargs.get(
+            "publication_pk",
+        )
+
+        return (
+            Comment.objects
+            .select_related(
+                "author",
+                "publication",
+            )
+            .filter(
+                publication_id=publication_id,
+            )
+        )
 
     def get_serializer_context(self):
         return {
             "request": self.request,
         }
 
-    def perform_create(self, serializer):
-        publication_id = self.kwargs.get("publication_pk")
+    def perform_create(
+        self,
+        serializer,
+    ):
+        publication_id = self.kwargs.get(
+            "publication_pk",
+        )
 
         publication = get_object_or_404(
             Publication,
             pk=publication_id,
         )
+
+        if not publication.comments_enabled:
+            raise ValidationError(
+                "Comments are disabled for this publication."
+            )
 
         serializer.save(
             author=self.request.user,

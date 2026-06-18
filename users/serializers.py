@@ -9,6 +9,7 @@ User = get_user_model()
 
 class UserProfileSerializer(serializers.ModelSerializer):
     # TODO Ajouter un avatar
+    # TODO Ajouter toutes les publications de l'utilisateur
     post_count = serializers.SerializerMethodField()
     class Meta:
         model = UserProfile

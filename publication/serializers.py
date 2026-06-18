@@ -1,6 +1,7 @@
 from rest_framework import serializers
 
 from users.serializers import UserPreviewSerializer
+
 from .models import (
     Comment,
     Publication,
@@ -22,6 +23,12 @@ class PublicationMediaSerializer(serializers.ModelSerializer):
 
 
 class PublicationCreateSerializer(serializers.ModelSerializer):
+    files = serializers.ListField(
+        child=serializers.FileField(),
+        write_only=True,
+        required=False,
+    )
+
     class Meta:
         model = Publication
 
@@ -29,14 +36,14 @@ class PublicationCreateSerializer(serializers.ModelSerializer):
             "id",
             "caption",
             "comments_enabled",
+            "files",
         ]
 
-    def validate_caption(
-        self,
-        value: str,
-    ) -> str:
+    def validate_caption(self, value):
         if not value.strip():
-            raise serializers.ValidationError("Caption cannot be empty.")
+            raise serializers.ValidationError(
+                "Caption cannot be empty."
+            )
 
         return value
 
@@ -72,28 +79,21 @@ class PublicationFeedSerializer(serializers.ModelSerializer):
             "created_at",
         ]
 
-    def get_likes_count(
-        self,
-        obj: Publication,
-    ) -> int:
+    def get_likes_count(self, obj):
         return obj.likes.count()
 
-    def get_comments_count(
-        self,
-        obj: Publication,
-    ) -> int:
+    def get_comments_count(self, obj):
         return obj.comments.count()
 
-    def get_is_liked(
-        self,
-        obj: Publication,
-    ) -> bool:
+    def get_is_liked(self, obj):
         request = self.context.get("request")
 
         if not request:
             return False
 
-        return obj.likes.filter(user=request.user).exists()
+        return obj.likes.filter(
+            user=request.user
+        ).exists()
 
 
 class PublicationDetailSerializer(serializers.ModelSerializer):
@@ -129,28 +129,21 @@ class PublicationDetailSerializer(serializers.ModelSerializer):
             "is_edited",
         ]
 
-    def get_likes_count(
-        self,
-        obj: Publication,
-    ) -> int:
+    def get_likes_count(self, obj):
         return obj.likes.count()
 
-    def get_comments_count(
-        self,
-        obj: Publication,
-    ) -> int:
+    def get_comments_count(self, obj):
         return obj.comments.count()
 
-    def get_is_liked(
-        self,
-        obj: Publication,
-    ) -> bool:
+    def get_is_liked(self, obj):
         request = self.context.get("request")
 
         if not request:
             return False
 
-        return obj.likes.filter(user=request.user).exists()
+        return obj.likes.filter(
+            user=request.user
+        ).exists()
 
 
 class PublicationLikeSerializer(serializers.ModelSerializer):
