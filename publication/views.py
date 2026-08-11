@@ -199,6 +199,47 @@ class PublicationViewSet(ModelViewSet):
             status=status.HTTP_204_NO_CONTENT,
         )
 
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="me",
+    )
+    def me(self, request):
+        queryset = (
+            self.get_queryset()
+            .filter(
+                author=request.user,
+                is_archived=False,
+            )
+            .order_by("-created_at")
+        )
+
+        page = self.paginate_queryset(
+            queryset,
+        )
+
+        if page is not None:
+            serializer = PublicationFeedSerializer(
+                page,
+                many=True,
+                context=self.get_serializer_context(),
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = PublicationFeedSerializer(
+            queryset,
+            many=True,
+            context=self.get_serializer_context(),
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
 class CommentViewSet(ModelViewSet):
     permission_classes = [
