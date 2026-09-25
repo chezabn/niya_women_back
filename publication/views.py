@@ -19,9 +19,20 @@ class PublicationViewSet(ModelViewSet):
     pagination_class = FeedPagination
 
     def get_queryset(self):
-        return Publication.objects.filter(
+        queryset = Publication.objects.filter(
             is_archived=False,
-        ).order_by(
+        )
+
+        if self.action == "my_publications":
+            queryset = queryset.filter(
+                author=self.request.user,
+            )
+        elif self.action == "list":
+            queryset = queryset.exclude(
+                author=self.request.user,
+            )
+
+        return queryset.order_by(
             "-created_at",
         )
 
