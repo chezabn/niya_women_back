@@ -1,8 +1,8 @@
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .views import PublicationViewSet
+
 
 router = DefaultRouter()
 
@@ -12,7 +12,10 @@ router.register(
     basename="publications",
 )
 
-urlpatterns = [
-    path("", include(router.urls)),
 
+urlpatterns = [
+    path(
+        "",
+        include(router.urls),
+    ),
 ]

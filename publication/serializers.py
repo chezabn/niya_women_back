@@ -1,32 +1,27 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from users.serializers import UserPreviewSerializer
-
-from .models import (
-    Comment,
-    Publication,
-    PublicationLike,
-    PublicationMedia,
-)
+from .models import Publication
 
 
-class PublicationMediaSerializer(serializers.ModelSerializer):
+User = get_user_model()
+
+
+class PublicationAuthorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PublicationMedia
+        model = User
 
         fields = [
             "id",
-            "file",
-            "media_type",
-            "order",
+            "username",
+            "first_name",
+            "last_name",
         ]
 
 
-class PublicationCreateSerializer(serializers.ModelSerializer):
-    files = serializers.ListField(
-        child=serializers.FileField(),
-        write_only=True,
-        required=False,
+class PublicationSerializer(serializers.ModelSerializer):
+    author = PublicationAuthorSerializer(
+        read_only=True,
     )
 
     class Meta:
@@ -34,9 +29,21 @@ class PublicationCreateSerializer(serializers.ModelSerializer):
 
         fields = [
             "id",
+            "author",
             "caption",
+            "created_at",
+            "updated_at",
+            "is_edited",
             "comments_enabled",
-            "files",
+            "is_archived",
+        ]
+
+        read_only_fields = [
+            "id",
+            "author",
+            "created_at",
+            "updated_at",
+            "is_edited",
         ]
 
     def validate_caption(self, value):
@@ -46,129 +53,3 @@ class PublicationCreateSerializer(serializers.ModelSerializer):
             )
 
         return value
-
-
-class PublicationFeedSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
-        read_only=True,
-    )
-
-    medias = PublicationMediaSerializer(
-        many=True,
-        read_only=True,
-    )
-
-    likes_count = serializers.SerializerMethodField()
-
-    comments_count = serializers.SerializerMethodField()
-
-    is_liked = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Publication
-
-        fields = [
-            "id",
-            "author",
-            "caption",
-            "medias",
-            "likes_count",
-            "comments_count",
-            "is_liked",
-            "is_edited",
-            "created_at",
-        ]
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
-
-    def get_comments_count(self, obj):
-        return obj.comments.count()
-
-    def get_is_liked(self, obj):
-        request = self.context.get("request")
-
-        if not request:
-            return False
-
-        return obj.likes.filter(
-            user=request.user
-        ).exists()
-
-
-class PublicationDetailSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
-        read_only=True,
-    )
-
-    medias = PublicationMediaSerializer(
-        many=True,
-        read_only=True,
-    )
-
-    likes_count = serializers.SerializerMethodField()
-
-    comments_count = serializers.SerializerMethodField()
-
-    is_liked = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Publication
-
-        fields = [
-            "id",
-            "author",
-            "caption",
-            "medias",
-            "likes_count",
-            "comments_count",
-            "is_liked",
-            "comments_enabled",
-            "created_at",
-            "updated_at",
-            "is_edited",
-        ]
-
-    def get_likes_count(self, obj):
-        return obj.likes.count()
-
-    def get_comments_count(self, obj):
-        return obj.comments.count()
-
-    def get_is_liked(self, obj):
-        request = self.context.get("request")
-
-        if not request:
-            return False
-
-        return obj.likes.filter(
-            user=request.user
-        ).exists()
-
-
-class PublicationLikeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PublicationLike
-
-        fields = [
-            "id",
-            "user",
-            "publication",
-            "created_at",
-        ]
-
-
-class CommentSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
-        read_only=True,
-    )
-
-    class Meta:
-        model = Comment
-
-        fields = [
-            "id",
-            "description",
-            "author",
-            "created_at",
-        ]
