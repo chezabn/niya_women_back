@@ -1,0 +1,29 @@
+meta {
+  name: Post Page
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{URL}}/api/journal/journals/
+  body: json
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1NTA3NTYwLCJpYXQiOjE3OTAzMjM1NjAsImp0aSI6ImEwMzU0MWNkZjg1ZjQ0OGU4OTMwYjBlNjZhNDE3MWI4IiwidXNlcl9pZCI6NjR9.gO6AeRabWH42Y8dZFyJ78tl-rpQ9m59v0kq-5WLqMEU
+}
+
+body:json {
+  {
+      "title": "Ma deuxièmejournée",
+      "page": "Aujourd'hui, j'ai passé ma deuxième journée au travail...",
+      "date": "2026-09-25"
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}
