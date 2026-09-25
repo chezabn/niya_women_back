@@ -3,11 +3,15 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
-from libs.permissions import IsFullyAuthenticated, IsPublicationOwner
+from libs.permissions import (
+    IsCommentOwner,
+    IsFullyAuthenticated,
+    IsPublicationOwner,
+)
 
-from .models import Publication
+from .models import Comment, Publication
 from .pagination import FeedPagination
-from .serializers import PublicationSerializer
+from .serializers import CommentSerializer, PublicationSerializer
 
 
 class PublicationViewSet(ModelViewSet):
@@ -68,9 +72,7 @@ class PublicationViewSet(ModelViewSet):
         url_path="me",
     )
     def my_publications(self, request):
-        publications = self.get_queryset().filter(
-            author=request.user,
-        )
+        publications = self.get_queryset()
 
         page = self.paginate_queryset(publications)
 
@@ -109,4 +111,93 @@ class PublicationViewSet(ModelViewSet):
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["GET"],
+        url_path="comments",
+    )
+    def comments(self, request, pk=None):
+        publication = self.get_object()
+
+        comments = Comment.objects.filter(
+            publication=publication,
+        ).select_related(
+            "author",
+        ).order_by(
+            "-created_at",
+        )
+
+        page = self.paginate_queryset(comments)
+
+        if page is not None:
+            serializer = CommentSerializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = CommentSerializer(
+            comments,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class CommentViewSet(ModelViewSet):
+    """
+    CRUD operations for comments.
+    """
+
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
+
+    serializer_class = CommentSerializer
+    pagination_class = FeedPagination
+
+    http_method_names = [
+        "get",
+        "post",
+        "patch",
+        "delete",
+        "head",
+        "options",
+    ]
+
+    def get_queryset(self):
+        return Comment.objects.filter(
+            publication__is_archived=False,
+        ).select_related(
+            "author",
+            "publication",
+        ).order_by(
+            "-created_at",
+        )
+
+    def get_permissions(self):
+        if self.action in [
+            "partial_update",
+            "destroy",
+        ]:
+            return [
+                IsFullyAuthenticated(),
+                IsCommentOwner(),
+            ]
+
+        return [
+            IsFullyAuthenticated(),
+        ]
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
         )

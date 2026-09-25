@@ -43,3 +43,13 @@ class IsPublicationOwner(BasePermission):
         obj,
     ) -> bool:
         return obj.author == request.user
+
+
+class IsCommentOwner(BasePermission):
+    def has_object_permission(
+        self,
+        request,
+        view,
+        obj,
+    ):
+        return obj.author == request.user
