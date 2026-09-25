@@ -6,19 +6,17 @@ from rest_framework.viewsets import ModelViewSet
 from libs.permissions import IsFullyAuthenticated, IsPublicationOwner
 
 from .models import Publication
+from .pagination import FeedPagination
 from .serializers import PublicationSerializer
 
 
 class PublicationViewSet(ModelViewSet):
-    """
-    CRUD and listing operations for publications.
-    """
-
     permission_classes = [
         IsFullyAuthenticated,
     ]
 
     serializer_class = PublicationSerializer
+    pagination_class = FeedPagination
 
     def get_queryset(self):
         return Publication.objects.filter(
@@ -62,6 +60,18 @@ class PublicationViewSet(ModelViewSet):
         publications = self.get_queryset().filter(
             author=request.user,
         )
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
 
         serializer = self.get_serializer(
             publications,
