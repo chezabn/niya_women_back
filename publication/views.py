@@ -1,6 +1,8 @@
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
 from libs.permissions import (
@@ -9,9 +11,9 @@ from libs.permissions import (
     IsPublicationOwner,
 )
 
-from .models import Comment, Publication
+from .models import Comment, Publication, PublicationLike
 from .pagination import FeedPagination
-from .serializers import CommentSerializer, PublicationSerializer
+from .serializers import CommentSerializer, PublicationSerializer, PublicationLikeSerializer
 
 
 class PublicationViewSet(ModelViewSet):
@@ -200,4 +202,82 @@ class CommentViewSet(ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(
             author=self.request.user,
+        )
+
+
+class PublicationLikeView(APIView):
+    """
+    Like or unlike a publication.
+
+    POST:
+        Create a like for the authenticated user.
+
+    DELETE:
+        Remove the authenticated user's like.
+    """
+
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
+
+    def post(self, request, publication_id):
+        publication = get_object_or_404(
+            Publication,
+            id=publication_id,
+        )
+
+        like, created = PublicationLike.objects.get_or_create(
+            user=request.user,
+            publication=publication,
+        )
+
+        serializer = PublicationLikeSerializer(
+            like,
+        )
+
+        if not created:
+            return Response(
+                {
+                    "detail": "Vous avez déjà aimé cette publication.",
+                    "liked": True,
+                    "like": serializer.data,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "detail": "Publication aimée.",
+                "liked": True,
+                "like": serializer.data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    def delete(self, request, publication_id):
+        publication = get_object_or_404(
+            Publication,
+            id=publication_id,
+        )
+
+        deleted_count, _ = PublicationLike.objects.filter(
+            user=request.user,
+            publication=publication,
+        ).delete()
+
+        if deleted_count == 0:
+            return Response(
+                {
+                    "detail": "Vous n'avez pas aimé cette publication.",
+                    "liked": False,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "detail": "Like retiré.",
+                "liked": False,
+            },
+            status=status.HTTP_200_OK,
         )

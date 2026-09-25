@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Publication, Comment
+from .models import Publication, Comment, PublicationLike
 
 User = get_user_model()
 
@@ -22,6 +22,12 @@ class PublicationSerializer(serializers.ModelSerializer):
     author = PublicationAuthorSerializer(
         read_only=True,
     )
+    like_count = serializers.IntegerField(
+        source="likes.count",
+        read_only=True,
+    )
+
+    is_liked = serializers.SerializerMethodField()
 
     class Meta:
         model = Publication
@@ -35,6 +41,8 @@ class PublicationSerializer(serializers.ModelSerializer):
             "is_edited",
             "comments_enabled",
             "is_archived",
+            "like_count",
+            "is_liked",
         ]
 
         read_only_fields = [
@@ -44,6 +52,17 @@ class PublicationSerializer(serializers.ModelSerializer):
             "updated_at",
             "is_edited",
         ]
+
+    def get_is_liked(self, obj):
+        request = self.context.get("request")
+
+        if not request or not request.user.is_authenticated:
+            return False
+
+        return PublicationLike.objects.filter(
+            publication=obj,
+            user=request.user,
+        ).exists()
 
     def validate_caption(self, value):
         if not value.strip():
@@ -105,3 +124,30 @@ class CommentSerializer(serializers.ModelSerializer):
             )
 
         return value
+
+
+class PublicationLikeSerializer(serializers.ModelSerializer):
+    user = serializers.IntegerField(
+        source="user.id",
+        read_only=True,
+    )
+
+    publication = serializers.IntegerField(
+        source="publication.id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = PublicationLike
+        fields = [
+            "id",
+            "user",
+            "publication",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "publication",
+            "created_at",
+        ]
