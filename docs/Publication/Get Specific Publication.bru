@@ -1,17 +1,17 @@
 meta {
-  name: Delete Publication
+  name: Get Specific Publication
   type: http
-  seq: 7
+  seq: 2
 }
 
-delete {
+get {
   url: {{URL}}/api/publications/publications/:id/
   body: none
   auth: inherit
 }
 
 params:path {
-  id: 10
+  id: 14
 }
 
 headers {
