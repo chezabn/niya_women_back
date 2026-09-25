@@ -1,27 +1,17 @@
 meta {
-  name: Update Publication
+  name: Get My Publications
   type: http
-  seq: 5
+  seq: 3
 }
 
-patch {
-  url: {{URL}}/api/publications/publications/:id/
-  body: json
+get {
+  url: {{URL}}/api/publications/publications/me/
+  body: none
   auth: inherit
-}
-
-params:path {
-  id: 5
 }
 
 headers {
   Authorization: Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1NTA3NTYwLCJpYXQiOjE3OTAzMjM1NjAsImp0aSI6ImEwMzU0MWNkZjg1ZjQ0OGU4OTMwYjBlNjZhNDE3MWI4IiwidXNlcl9pZCI6NjR9.gO6AeRabWH42Y8dZFyJ78tl-rpQ9m59v0kq-5WLqMEU
-}
-
-body:json {
-  {
-    "caption": "J'ai modifié ma publication"
-  }
 }
 
 settings {
