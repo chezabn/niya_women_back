@@ -153,6 +153,38 @@ class PublicationViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="liked",
+    )
+    def liked_publications(self, request):
+        publications = self.get_queryset().filter(
+            likes__user=request.user,
+        ).distinct()
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = self.get_serializer(
+            publications,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
 class CommentViewSet(ModelViewSet):
     """
