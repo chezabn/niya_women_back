@@ -185,6 +185,38 @@ class PublicationViewSet(ModelViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path=r"user/(?P<user_id>[0-9]+)",
+    )
+    def user_publications(self, request, user_id=None):
+        publications = self.get_queryset().filter(
+            author_id=user_id,
+        )
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = self.get_serializer(
+            publications,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
 
 class CommentViewSet(ModelViewSet):
     """

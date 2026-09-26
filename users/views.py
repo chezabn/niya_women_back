@@ -3,7 +3,7 @@ import os
 from django.db import connections
 from django.db.models.query_utils import Q
 from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -171,3 +171,18 @@ class UserSearchAPIView(ListAPIView):
                 Q(username__icontains=query) | Q(profile__bio__icontains=query)
             )
         return queryset
+
+
+class UserDetailAPIView(RetrieveAPIView):
+    """
+    Retrieve the profile of a user by their ID.
+    """
+
+    serializer_class = UserSerializer
+    permission_classes = [IsFullyAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(
+            is_superuser=False,
+            is_active=True,
+        )

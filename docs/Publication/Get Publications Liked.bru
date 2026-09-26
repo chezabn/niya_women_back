@@ -1,17 +1,13 @@
 meta {
-  name: Search User
+  name: Get Publications Liked
   type: http
-  seq: 5
+  seq: 8
 }
 
 get {
-  url: {{URL}}/api/users/search/?q=
+  url: {{URL}}/api/publications/publications/liked/
   body: none
   auth: inherit
-}
-
-params:query {
-  q: 
 }
 
 headers {
