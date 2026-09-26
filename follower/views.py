@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -6,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from users.serializers import UserPreviewSerializer
-from .models import Follow
+from .models import Follow, Friendship
 
 User = get_user_model()
 
@@ -161,3 +162,86 @@ class FollowingListView(APIView):
         users = [f.followed for f in following]
         serializer = UserPreviewSerializer(users, many=True)
         return Response(serializer.data)
+
+
+class FriendRequestView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, user_id):
+        recipient = get_object_or_404(User, pk=user_id)
+        if recipient == request.user:
+            return Response({"error": "You cannot add yourself"}, status=400)
+
+        # An incoming request can be accepted by sending a request back.
+        incoming = Friendship.objects.filter(
+            requester=recipient, recipient=request.user
+        ).first()
+        if incoming:
+            if incoming.status == Friendship.PENDING:
+                incoming.status = Friendship.ACCEPTED
+                incoming.save(update_fields=["status"])
+                return Response({"status": Friendship.ACCEPTED}, status=200)
+            return Response({"status": incoming.status}, status=200)
+
+        friendship, created = Friendship.objects.get_or_create(
+            requester=request.user, recipient=recipient
+        )
+        return Response(
+            {"status": friendship.status},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
+
+    def patch(self, request, user_id):
+        requester = get_object_or_404(User, pk=user_id)
+        friendship = get_object_or_404(
+            Friendship, requester=requester, recipient=request.user
+        )
+        if friendship.status != Friendship.ACCEPTED:
+            friendship.status = Friendship.ACCEPTED
+            friendship.save(update_fields=["status"])
+        return Response({"status": friendship.status})
+
+    def delete(self, request, user_id):
+        other_user = get_object_or_404(User, pk=user_id)
+        Friendship.objects.filter(
+            requester=request.user, recipient=other_user
+        ).delete()
+        Friendship.objects.filter(
+            requester=other_user, recipient=request.user
+        ).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    def get(self, request, user_id):
+        other_user = get_object_or_404(User, pk=user_id)
+        friendship = Friendship.objects.filter(
+            requester=request.user, recipient=other_user
+        ).first() or Friendship.objects.filter(
+            requester=other_user, recipient=request.user
+        ).first()
+        return Response({"status": friendship.status if friendship else None})
+
+
+class FriendsListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        accepted = Friendship.objects.filter(status=Friendship.ACCEPTED).filter(
+            Q(requester=request.user) | Q(recipient=request.user)
+        ).select_related("requester", "recipient")
+        friends = [
+            row.recipient if row.requester_id == request.user.id else row.requester
+            for row in accepted
+        ]
+        return Response(UserPreviewSerializer(friends, many=True).data)
+
+
+class FriendRequestsListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        requests = Friendship.objects.filter(
+            recipient=request.user, status=Friendship.PENDING
+        ).select_related("requester")
+        return Response(
+            UserPreviewSerializer([row.requester for row in requests], many=True).data
+        )
