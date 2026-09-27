@@ -1,6 +1,9 @@
 from django.contrib import admin
 
-from .models import UserProfile
+from .models import UserProfile, UserBlock, UserReport
+
+admin.site.register(UserBlock)
+admin.site.register(UserReport)
 
 
 @admin.register(UserProfile)

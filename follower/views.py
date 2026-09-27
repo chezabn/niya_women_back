@@ -1,12 +1,14 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from publication.pagination import FeedPagination
+from users.models import UserBlock
 from users.serializers import UserPreviewSerializer
+from publication.pagination import FeedPagination
 
 from .models import Follow
 from .serializers import FollowStatusSerializer
@@ -60,6 +62,14 @@ class FollowView(APIView):
             return Response(
                 {"error": "You cannot follow yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if UserBlock.objects.filter(
+            Q(blocker=request.user, blocked=target_user)
+            | Q(blocker=target_user, blocked=request.user)
+        ).exists():
+            return Response(
+                {"error": "Cette action n'est pas disponible."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         follow, created = Follow.objects.get_or_create(
             follower=request.user, followed=target_user

@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,6 +11,7 @@ from libs.permissions import (
     IsFullyAuthenticated,
     IsPublicationOwner,
 )
+from users.models import UserBlock
 
 from .models import Comment, Publication, PublicationLike
 from .pagination import FeedPagination
@@ -29,6 +31,17 @@ class PublicationViewSet(ModelViewSet):
             is_archived=False,
         )
 
+        blocked_ids = UserBlock.objects.filter(
+            Q(blocker=self.request.user) | Q(blocked=self.request.user)
+        ).values_list("blocked_id", "blocker_id")
+
+        hidden_ids = {pk for pair in blocked_ids for pk in pair}
+
+        # Never hide the authenticated user's own publications.
+        hidden_ids.discard(self.request.user.pk)
+
+        queryset = queryset.exclude(author_id__in=hidden_ids)
+
         if self.action == "my_publications":
             queryset = queryset.filter(
                 author=self.request.user,
@@ -38,9 +51,7 @@ class PublicationViewSet(ModelViewSet):
                 author=self.request.user,
             )
 
-        return queryset.order_by(
-            "-created_at",
-        )
+        return queryset.order_by("-created_at")
 
     def get_permissions(self):
         if self.action in [
@@ -240,9 +251,13 @@ class CommentViewSet(ModelViewSet):
     ]
 
     def get_queryset(self):
+        blocked_ids = UserBlock.objects.filter(
+            Q(blocker=self.request.user) | Q(blocked=self.request.user)
+        ).values_list("blocked_id", "blocker_id")
+        hidden_ids = {pk for pair in blocked_ids for pk in pair}
         return Comment.objects.filter(
             publication__is_archived=False,
-        ).select_related(
+        ).exclude(author_id__in=hidden_ids).select_related(
             "author",
             "publication",
         ).order_by(

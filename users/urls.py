@@ -6,6 +6,9 @@ from .views import (
     UserDetailAPIView,
     UsersAPIView,
     UserSearchAPIView,
+    BlockedUsersAPIView,
+    UserBlockAPIView,
+    UserReportAPIView,
 )
 
 urlpatterns = [
@@ -34,4 +37,7 @@ urlpatterns = [
         UserDetailAPIView.as_view(),
         name="user_detail",
     ),
+    path("block/", BlockedUsersAPIView.as_view(), name="blocked_users"),
+    path("<int:user_id>/block/", UserBlockAPIView.as_view(), name="user_block"),
+    path("reports/", UserReportAPIView.as_view(), name="user_report"),
 ]
