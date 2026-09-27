@@ -142,6 +142,12 @@ class FollowersListView(APIView):
         users = User.objects.filter(following__followed=target_user).order_by("id")
         return paginated_user_response(request, users, self)
 
+    def delete(self, request, user_id):
+        """Remove the specified account from the authenticated user's followers."""
+        follower = get_object_or_404(User, id=user_id)
+        Follow.objects.filter(follower=follower, followed=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class FollowingListView(APIView):
     """
@@ -173,4 +179,3 @@ class FollowingListView(APIView):
         # reverse relation from User to Follow.followed.
         users = User.objects.filter(followers__follower=target_user).order_by("id")
         return paginated_user_response(request, users, self)
-
