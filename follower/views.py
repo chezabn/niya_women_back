@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -9,12 +8,8 @@ from rest_framework.views import APIView
 from publication.pagination import FeedPagination
 from users.serializers import UserPreviewSerializer
 
-from .models import Follow, Friendship
-from .serializers import (
-    FollowStatusSerializer,
-    FriendTargetSerializer,
-    FriendshipStatusSerializer,
-)
+from .models import Follow
+from .serializers import FollowStatusSerializer
 
 User = get_user_model()
 
@@ -25,21 +20,6 @@ def paginated_user_response(request, users, view):
     page = paginator.paginate_queryset(users, request, view=view)
     serializer = UserPreviewSerializer(page, many=True)
     return paginator.get_paginated_response(serializer.data)
-
-
-def validate_friend_target(request, user_id):
-    serializer = FriendTargetSerializer(
-        data={"user_id": user_id}, context={"request": request}
-    )
-    serializer.is_valid(raise_exception=True)
-    return serializer.validated_data["user_id"]
-
-
-def friendship_status_response(friendship, http_status=status.HTTP_200_OK):
-    serializer = FriendshipStatusSerializer(
-        instance={"status": friendship.status if friendship else None}
-    )
-    return Response(serializer.data, status=http_status)
 
 
 class FollowView(APIView):
@@ -157,7 +137,9 @@ class FollowersListView(APIView):
         :statuscode 404: User with given ID does not exist.
         """
         target_user = get_object_or_404(User, id=user_id)
-        users = User.objects.filter(followers__followed=target_user).order_by("id")
+        # The listed user is the follower; ``following`` is the reverse
+        # relation from User to Follow.follower.
+        users = User.objects.filter(following__followed=target_user).order_by("id")
         return paginated_user_response(request, users, self)
 
 
@@ -187,90 +169,8 @@ class FollowingListView(APIView):
         :statuscode 404: User with given ID does not exist.
         """
         target_user = get_object_or_404(User, id=user_id)
-        users = User.objects.filter(following__follower=target_user).order_by("id")
+        # The listed user is the followed account; ``followers`` is the
+        # reverse relation from User to Follow.followed.
+        users = User.objects.filter(followers__follower=target_user).order_by("id")
         return paginated_user_response(request, users, self)
 
-
-class FriendRequestView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, user_id):
-        recipient = validate_friend_target(request, user_id)
-
-        # An incoming request can be accepted by sending a request back.
-        incoming = Friendship.objects.filter(
-            requester=recipient, recipient=request.user
-        ).first()
-        if incoming:
-            if incoming.status == Friendship.PENDING:
-                incoming.status = Friendship.ACCEPTED
-                incoming.save(update_fields=["status"])
-                return friendship_status_response(incoming)
-            return friendship_status_response(incoming)
-
-        friendship, created = Friendship.objects.get_or_create(
-            requester=request.user, recipient=recipient
-        )
-        return friendship_status_response(
-            friendship,
-            http_status=(
-                status.HTTP_201_CREATED if created else status.HTTP_200_OK
-            ),
-        )
-
-    def patch(self, request, user_id):
-        requester = validate_friend_target(request, user_id)
-        friendship = get_object_or_404(
-            Friendship, requester=requester, recipient=request.user
-        )
-        if friendship.status != Friendship.ACCEPTED:
-            friendship.status = Friendship.ACCEPTED
-            friendship.save(update_fields=["status"])
-        return friendship_status_response(friendship)
-
-    def delete(self, request, user_id):
-        other_user = validate_friend_target(request, user_id)
-        Friendship.objects.filter(
-            requester=request.user, recipient=other_user
-        ).delete()
-        Friendship.objects.filter(
-            requester=other_user, recipient=request.user
-        ).delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
-
-    def get(self, request, user_id):
-        other_user = validate_friend_target(request, user_id)
-        friendship = Friendship.objects.filter(
-            requester=request.user, recipient=other_user
-        ).first() or Friendship.objects.filter(
-            requester=other_user, recipient=request.user
-        ).first()
-        return friendship_status_response(friendship)
-
-
-class FriendsListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        friends = User.objects.filter(
-            Q(
-                friend_requests_received__requester=request.user,
-                friend_requests_received__status=Friendship.ACCEPTED,
-            )
-            | Q(
-                friend_requests_sent__recipient=request.user,
-                friend_requests_sent__status=Friendship.ACCEPTED,
-            )
-        ).distinct().order_by("id")
-        return paginated_user_response(request, friends, self)
-
-
-class FriendRequestsListView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        users = User.objects.filter(
-            friend_requests_sent__recipient=request.user,
-            friend_requests_sent__status=Friendship.PENDING,
-        ).order_by("id")
-        return paginated_user_response(request, users, self)

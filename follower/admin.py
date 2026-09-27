@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Follow, Friendship
+from .models import Follow
 
 
 @admin.register(Follow)
@@ -27,29 +27,3 @@ class FollowAdmin(admin.ModelAdmin):
         "-created_at",
     )
 
-
-@admin.register(Friendship)
-class FriendshipAdmin(admin.ModelAdmin):
-    list_display = (
-        "id",
-        "requester",
-        "recipient",
-        "status",
-        "created_at",
-    )
-    list_filter = (
-        "status",
-        "created_at",
-    )
-    search_fields = (
-        "requester__username",
-        "recipient__username",
-        "requester__email",
-        "recipient__email",
-    )
-    readonly_fields = (
-        "created_at",
-    )
-    ordering = (
-        "-created_at",
-    )

@@ -26,6 +26,9 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)
+    followers_count = serializers.SerializerMethodField()
+    following_count = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = [
@@ -44,7 +47,15 @@ class UserSerializer(serializers.ModelSerializer):
             "is_superuser",
 
             "profile",
+            "followers_count",
+            "following_count",
         ]
+
+    def get_followers_count(self, obj):
+        return obj.followers.count()
+
+    def get_following_count(self, obj):
+        return obj.following.count()
 
 
 class UserUpdateSerializer(serializers.Serializer):
