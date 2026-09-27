@@ -15,7 +15,7 @@ from .models import UserBlock, UserReport
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
@@ -234,30 +234,49 @@ class UserBlockAPIView(APIView):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class UserReportSerializer(serializers.Serializer):
-    user_id = serializers.IntegerField()
-    reason = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
-
-    def validate_user_id(self, value):
-        request = self.context["request"]
-        if value == request.user.pk:
-            raise serializers.ValidationError("Vous ne pouvez pas signaler votre propre compte.")
-        if not User.objects.filter(pk=value, is_active=True, is_superuser=False).exists():
-            raise serializers.ValidationError("Utilisateur introuvable.")
-        return value
-
-    def validate_reason(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
-        return value.strip()
-
-
 class UserReportAPIView(APIView):
     permission_classes = [IsFullyAuthenticated]
 
     def post(self, request):
-        serializer = UserReportSerializer(data=request.data, context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        target = User.objects.get(pk=serializer.validated_data["user_id"])
-        report = UserReport.objects.create(reporter=request.user, reported=target, reason=serializer.validated_data["reason"])
-        return Response({"id": report.pk, "detail": "Signalement transmis."}, status=status.HTTP_201_CREATED)
+        serializer = UserReportSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+
+        if not serializer.is_valid():
+            user_id = request.data.get("user_id")
+
+            detail = next(
+                (
+                    str(error)
+                    for errors in serializer.errors.values()
+                    for error in errors
+                ),
+                "Impossible de transmettre le signalement.",
+            )
+
+            return Response(
+                {
+                    "id": user_id,
+                    "detail": detail,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target = User.objects.get(
+            pk=serializer.validated_data["user_id"],
+        )
+
+        report = UserReport.objects.create(
+            reporter=request.user,
+            reported=target,
+            reason=serializer.validated_data["reason"],
+        )
+
+        return Response(
+            {
+                "id": report.id,
+                "detail": "Signalement transmis.",
+            },
+            status=status.HTTP_201_CREATED,
+        )

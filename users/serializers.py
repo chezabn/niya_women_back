@@ -84,3 +84,20 @@ class UserPreviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["id", "username", "identity_verified", "profile"]
+
+class UserReportSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    reason = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
+
+    def validate_user_id(self, value):
+        request = self.context["request"]
+        if value == request.user.pk:
+            raise serializers.ValidationError("Vous ne pouvez pas signaler votre propre compte.")
+        if not User.objects.filter(pk=value, is_active=True, is_superuser=False).exists():
+            raise serializers.ValidationError("Utilisateur introuvable.")
+        return value
+
+    def validate_reason(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
+        return value.strip()
