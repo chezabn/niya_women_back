@@ -5,7 +5,7 @@ from .views import (
     SubmitIdentityVerificationView,
     AdminReviewIdentityView,
     ReviewIdentityView,
-    IdentityVerificationStatusView,
+    IdentityVerificationStatusView, AdminIdentityVerificationListView,
 )
 
 urlpatterns = [
@@ -31,6 +31,12 @@ urlpatterns = [
         "admin/identity/<int:pk>/review/",
         AdminReviewIdentityView.as_view(),
         name="admin_review_identity",
+    ),
+
+    path(
+        "admin/identity/",
+        AdminIdentityVerificationListView.as_view(),
+        name="admin_identity_verification_list",
     ),
 
     path(

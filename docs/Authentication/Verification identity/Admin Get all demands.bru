@@ -1,0 +1,25 @@
+meta {
+  name: Admin Get all demands
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{URL}}/api/identification/admin/identity/?status=approved
+  body: none
+  auth: inherit
+}
+
+params:query {
+  status: approved
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1Nzc2ODA3LCJpYXQiOjE3OTA1OTI4MDcsImp0aSI6ImJlOTk2ZmYxMTY1NTQxMDBhNTU2OGEyZjZiNTRmY2I2IiwidXNlcl9pZCI6NjN9.d_oJG8pnFijFyOWkbvpIo7-W5cLjwY7bqzdEm_zJSTg
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}

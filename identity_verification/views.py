@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from niya import settings
+from publication.pagination import FeedPagination
 from .constants import (
     EMAIL_SUBJECT_VERIFICATION_REJECTED,
     EMAIL_BODY_VERIFICATION_REJECTED,
@@ -215,6 +216,48 @@ class AdminReviewIdentityView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AdminIdentityVerificationListView(APIView):
+    """
+    Permet à un membre de l'équipe de validation de consulter
+    toutes les demandes de vérification d'identité.
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        verification_requests = (
+            IdentityVerificationRequest.objects
+            .select_related("user", "reviewed_by")
+            .order_by("-created_at")
+        )
+
+        status_filter = request.query_params.get("status", "").strip().lower()
+        status_aliases = {
+            "pending": "PENDING",
+            "approved": "APPROVED",
+            "approve": "APPROVED",
+            "rejected": "REJECTED",
+            "reject": "REJECTED",
+        }
+        if status_filter:
+            if status_filter not in status_aliases:
+                return Response(
+                    {"status": "Valeur invalide. Utilisez pending, approved ou rejected."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            verification_requests = verification_requests.filter(
+                status=status_aliases[status_filter]
+            )
+
+        paginator = FeedPagination()
+        page = paginator.paginate_queryset(verification_requests, request, view=self)
+        serializer = IdentityVerificationDetailSerializer(
+            page,
+            many=True,
+        )
+
+        return paginator.get_paginated_response(serializer.data)
 
 class ReviewIdentityView(APIView):
     permission_classes = [permissions.IsAdminUser]
