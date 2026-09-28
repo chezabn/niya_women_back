@@ -129,7 +129,7 @@ class SubmitIdentityVerificationView(APIView):
                     .objects.filter(is_superuser=True)
                     .values_list("email", flat=True)
                 )
-
+# TODO CHANGER LE MAIL DE NOTIFICATION
                 send_mail(
                     subject=EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
                     message=message_body,
@@ -156,6 +156,17 @@ class AdminReviewIdentityView(APIView):
 
     permission_classes = [permissions.IsAdminUser]
 
+    @staticmethod
+    def delete_verification_images(verification_req):
+        image_fields = ("id_card_front", "selfie_with_id")
+        for field_name in image_fields:
+            image = getattr(verification_req, field_name)
+            if image and image.name:
+                image.storage.delete(image.name)
+                setattr(verification_req, field_name, "")
+
+        verification_req.save(update_fields=image_fields)
+
     def post(self, request, pk):
         verification_req = get_object_or_404(IdentityVerificationRequest, pk=pk)
         serializer = AdminVerificationReviewSerializer(data=request.data)
@@ -166,6 +177,7 @@ class AdminReviewIdentityView(APIView):
             if action == "approve":
                 # 1. Valider la demande (change le statut et active le compte)
                 verification_req.approve(request.user)
+                self.delete_verification_images(verification_req)
                 # 2. Envoyer l'email de félicitations
                 try:
                     send_mail(
@@ -193,6 +205,7 @@ class AdminReviewIdentityView(APIView):
                 reason = data.get("rejection_reason", "Non spécifié")
                 # 1. Rejeter la demande
                 verification_req.reject(request.user, reason)
+                self.delete_verification_images(verification_req)
                 # 2. Envoyer l'email de rejet
                 try:
                     send_mail(
