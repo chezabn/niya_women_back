@@ -233,3 +233,34 @@ class ReviewIdentityView(APIView):
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
+class IdentityVerificationStatusView(APIView):
+    """
+    Permet à l'utilisatrice de consulter le statut de sa demande
+    de vérification d'identité.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            verification_request = request.user.identity_request
+        except IdentityVerificationRequest.DoesNotExist:
+            return Response(
+                {
+                    "has_request": False,
+                    "status": None,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "has_request": True,
+                "status": verification_request.status,
+                "rejection_reason": verification_request.rejection_reason,
+                "created_at": verification_request.created_at,
+                "updated_at": verification_request.updated_at,
+            },
+            status=status.HTTP_200_OK,
+        )

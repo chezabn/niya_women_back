@@ -12,17 +12,23 @@ class CustomUserAdmin(UserAdmin):
         "email",
         "first_name",
         "last_name",
-        "identity_verified",
         "email_verified",
+        "identity_verified",
+        "identity_requested",
         "is_active",
         "is_staff",
-        "is_superuser",
+        "failed_login_attempts",
+        "locked_until",
         "date_joined",
     )
 
     list_filter = (
-        "identity_verified",
         "email_verified",
+        "identity_verified",
+        "identity_requested",
+        "accept_cgu",
+        "account_deactivated_by_user",
+        "require_password_reset",
         "is_active",
         "is_staff",
         "is_superuser",
@@ -43,11 +49,16 @@ class CustomUserAdmin(UserAdmin):
     readonly_fields = (
         "last_login",
         "date_joined",
+        "email_verification_code",
+        "email_verification_code_expires",
+        "password_reset_code",
+        "password_reset_code_expires",
+        "last_failed_login",
     )
 
     fieldsets = (
         (
-            "Informations personnelles",
+            "👤 Informations du compte",
             {
                 "fields": (
                     "username",
@@ -55,20 +66,52 @@ class CustomUserAdmin(UserAdmin):
                     "first_name",
                     "last_name",
                     "password",
-                )
+                    "accept_cgu",
+                ),
             },
         ),
         (
-            "Vérification",
+            "✉️ Vérification de l'adresse email",
             {
                 "fields": (
                     "email_verified",
-                    "identity_verified",
-                )
+                    "email_verification_code",
+                    "email_verification_code_expires",
+                ),
             },
         ),
         (
-            "Permissions",
+            "🪪 Vérification d'identité",
+            {
+                "fields": (
+                    "identity_verified",
+                    "identity_requested",
+                ),
+            },
+        ),
+        (
+            "🔐 Sécurité du compte",
+            {
+                "fields": (
+                    "account_deactivated_by_user",
+                    "require_password_reset",
+                    "failed_login_attempts",
+                    "last_failed_login",
+                    "locked_until",
+                ),
+            },
+        ),
+        (
+            "🔑 Réinitialisation du mot de passe",
+            {
+                "fields": (
+                    "password_reset_code",
+                    "password_reset_code_expires",
+                ),
+            },
+        ),
+        (
+            "🛡️ Permissions Django",
             {
                 "fields": (
                     "is_active",
@@ -76,25 +119,27 @@ class CustomUserAdmin(UserAdmin):
                     "is_superuser",
                     "groups",
                     "user_permissions",
-                )
+                ),
             },
         ),
         (
-            "Dates importantes",
+            "📅 Dates",
             {
                 "fields": (
                     "last_login",
                     "date_joined",
-                )
+                ),
             },
         ),
     )
 
     add_fieldsets = (
         (
-            None,
+            "Créer une utilisatrice",
             {
-                "classes": ("wide",),
+                "classes": (
+                    "wide",
+                ),
                 "fields": (
                     "username",
                     "email",
@@ -102,8 +147,30 @@ class CustomUserAdmin(UserAdmin):
                     "last_name",
                     "password1",
                     "password2",
-                    "identity_verified",
+                ),
+            },
+        ),
+        (
+            "Vérification",
+            {
+                "classes": (
+                    "wide",
+                ),
+                "fields": (
+                    "accept_cgu",
                     "email_verified",
+                    "identity_verified",
+                    "identity_requested",
+                ),
+            },
+        ),
+        (
+            "Statut du compte",
+            {
+                "classes": (
+                    "wide",
+                ),
+                "fields": (
                     "is_active",
                     "is_staff",
                     "is_superuser",
