@@ -1,14 +1,27 @@
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from users.models import UserBlock
 from users.serializers import UserPreviewSerializer
+from publication.pagination import FeedPagination
+
 from .models import Follow
+from .serializers import FollowStatusSerializer
 
 User = get_user_model()
+
+
+def paginated_user_response(request, users, view):
+    paginator = FeedPagination()
+    users = users.select_related("profile")
+    page = paginator.paginate_queryset(users, request, view=view)
+    serializer = UserPreviewSerializer(page, many=True)
+    return paginator.get_paginated_response(serializer.data)
 
 
 class FollowView(APIView):
@@ -49,6 +62,14 @@ class FollowView(APIView):
             return Response(
                 {"error": "You cannot follow yourself"},
                 status=status.HTTP_400_BAD_REQUEST,
+            )
+        if UserBlock.objects.filter(
+            Q(blocker=request.user, blocked=target_user)
+            | Q(blocker=target_user, blocked=request.user)
+        ).exists():
+            return Response(
+                {"error": "Cette action n'est pas disponible."},
+                status=status.HTTP_403_FORBIDDEN,
             )
         follow, created = Follow.objects.get_or_create(
             follower=request.user, followed=target_user
@@ -96,7 +117,8 @@ class FollowView(APIView):
         is_following = Follow.objects.filter(
             follower=request.user, followed=target_user
         ).exists()
-        return Response({"is_following": is_following})
+        serializer = FollowStatusSerializer(instance={"is_following": is_following})
+        return Response(serializer.data)
 
 
 class FollowersListView(APIView):
@@ -125,10 +147,16 @@ class FollowersListView(APIView):
         :statuscode 404: User with given ID does not exist.
         """
         target_user = get_object_or_404(User, id=user_id)
-        followers = target_user.followers.all().select_related("follower")
-        users = [f.follower for f in followers]
-        serializer = UserPreviewSerializer(users, many=True)
-        return Response(serializer.data)
+        # The listed user is the follower; ``following`` is the reverse
+        # relation from User to Follow.follower.
+        users = User.objects.filter(following__followed=target_user).order_by("id")
+        return paginated_user_response(request, users, self)
+
+    def delete(self, request, user_id):
+        """Remove the specified account from the authenticated user's followers."""
+        follower = get_object_or_404(User, id=user_id)
+        Follow.objects.filter(follower=follower, followed=request.user).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class FollowingListView(APIView):
@@ -157,7 +185,7 @@ class FollowingListView(APIView):
         :statuscode 404: User with given ID does not exist.
         """
         target_user = get_object_or_404(User, id=user_id)
-        following = target_user.following.all().select_related("followed")
-        users = [f.followed for f in following]
-        serializer = UserPreviewSerializer(users, many=True)
-        return Response(serializer.data)
+        # The listed user is the followed account; ``followers`` is the
+        # reverse relation from User to Follow.followed.
+        users = User.objects.filter(followers__follower=target_user).order_by("id")
+        return paginated_user_response(request, users, self)

@@ -1,59 +1,31 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from users.serializers import UserPreviewSerializer
-from .models import (
-    Comment,
-    Publication,
-    PublicationLike,
-    PublicationMedia,
-)
+from .models import Publication, Comment, PublicationLike
+
+User = get_user_model()
 
 
-class PublicationMediaSerializer(serializers.ModelSerializer):
+class PublicationAuthorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PublicationMedia
+        model = User
 
         fields = [
             "id",
-            "file",
-            "media_type",
-            "order",
+            "username",
+            "first_name",
+            "last_name",
         ]
 
 
-class PublicationCreateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Publication
-
-        fields = [
-            "id",
-            "caption",
-            "comments_enabled",
-        ]
-
-    def validate_caption(
-        self,
-        value: str,
-    ) -> str:
-        if not value.strip():
-            raise serializers.ValidationError("Caption cannot be empty.")
-
-        return value
-
-
-class PublicationFeedSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
+class PublicationSerializer(serializers.ModelSerializer):
+    author = PublicationAuthorSerializer(
         read_only=True,
     )
-
-    medias = PublicationMediaSerializer(
-        many=True,
+    like_count = serializers.IntegerField(
+        source="likes.count",
         read_only=True,
     )
-
-    likes_count = serializers.SerializerMethodField()
-
-    comments_count = serializers.SerializerMethodField()
 
     is_liked = serializers.SerializerMethodField()
 
@@ -64,109 +36,54 @@ class PublicationFeedSerializer(serializers.ModelSerializer):
             "id",
             "author",
             "caption",
-            "medias",
-            "likes_count",
-            "comments_count",
-            "is_liked",
-            "is_edited",
             "created_at",
+            "updated_at",
+            "is_edited",
+            "comments_enabled",
+            "is_archived",
+            "like_count",
+            "is_liked",
         ]
 
-    def get_likes_count(
-        self,
-        obj: Publication,
-    ) -> int:
-        return obj.likes.count()
-
-    def get_comments_count(
-        self,
-        obj: Publication,
-    ) -> int:
-        return obj.comments.count()
-
-    def get_is_liked(
-        self,
-        obj: Publication,
-    ) -> bool:
-        request = self.context.get("request")
-
-        if not request:
-            return False
-
-        return obj.likes.filter(user=request.user).exists()
-
-
-class PublicationDetailSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
-        read_only=True,
-    )
-
-    medias = PublicationMediaSerializer(
-        many=True,
-        read_only=True,
-    )
-
-    likes_count = serializers.SerializerMethodField()
-
-    comments_count = serializers.SerializerMethodField()
-
-    is_liked = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Publication
-
-        fields = [
+        read_only_fields = [
             "id",
             "author",
-            "caption",
-            "medias",
-            "likes_count",
-            "comments_count",
-            "is_liked",
-            "comments_enabled",
             "created_at",
             "updated_at",
             "is_edited",
         ]
 
-    def get_likes_count(
-        self,
-        obj: Publication,
-    ) -> int:
-        return obj.likes.count()
-
-    def get_comments_count(
-        self,
-        obj: Publication,
-    ) -> int:
-        return obj.comments.count()
-
-    def get_is_liked(
-        self,
-        obj: Publication,
-    ) -> bool:
+    def get_is_liked(self, obj):
         request = self.context.get("request")
 
-        if not request:
+        if not request or not request.user.is_authenticated:
             return False
 
-        return obj.likes.filter(user=request.user).exists()
+        return PublicationLike.objects.filter(
+            publication=obj,
+            user=request.user,
+        ).exists()
 
+    def validate_caption(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                "Caption cannot be empty."
+            )
 
-class PublicationLikeSerializer(serializers.ModelSerializer):
+        return value
+
+class CommentAuthorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = PublicationLike
-
+        model = User
         fields = [
             "id",
-            "user",
-            "publication",
-            "created_at",
+            "username",
+            "first_name",
+            "last_name",
         ]
 
-
 class CommentSerializer(serializers.ModelSerializer):
-    author = UserPreviewSerializer(
+    author = CommentAuthorSerializer(
         read_only=True,
     )
 
@@ -175,7 +92,62 @@ class CommentSerializer(serializers.ModelSerializer):
 
         fields = [
             "id",
-            "description",
+            "publication",
             "author",
+            "description",
+            "created_at",
+        ]
+
+        read_only_fields = [
+            "id",
+            "author",
+            "created_at",
+        ]
+
+    def validate_description(self, value):
+        if not value.strip():
+            raise serializers.ValidationError(
+                "Comment cannot be empty."
+            )
+
+        return value
+
+    def validate_publication(self, value):
+        if not value.comments_enabled:
+            raise serializers.ValidationError(
+                "Comments are disabled for this publication."
+            )
+
+        if value.is_archived:
+            raise serializers.ValidationError(
+                "You cannot comment on an archived publication."
+            )
+
+        return value
+
+
+class PublicationLikeSerializer(serializers.ModelSerializer):
+    user = serializers.IntegerField(
+        source="user.id",
+        read_only=True,
+    )
+
+    publication = serializers.IntegerField(
+        source="publication.id",
+        read_only=True,
+    )
+
+    class Meta:
+        model = PublicationLike
+        fields = [
+            "id",
+            "user",
+            "publication",
+            "created_at",
+        ]
+        read_only_fields = [
+            "id",
+            "user",
+            "publication",
             "created_at",
         ]

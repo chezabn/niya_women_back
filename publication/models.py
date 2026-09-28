@@ -17,7 +17,7 @@ class Publication(models.Model):
 
     caption = models.TextField(
         max_length=2200,
-        blank=True,
+        blank=False,
     )
 
     created_at = models.DateTimeField(
@@ -51,44 +51,6 @@ class Publication(models.Model):
     def __str__(self) -> str:
         return f"Publication {self.pk}"
 
-
-class PublicationMedia(models.Model):
-    """
-    Represents a media attached to a publication.
-    """
-
-    class MediaType(models.TextChoices):
-        IMAGE = "IMAGE", "Image"
-        VIDEO = "VIDEO", "Video"
-
-    publication = models.ForeignKey(
-        Publication,
-        on_delete=models.CASCADE,
-        related_name="medias",
-    )
-
-    file = models.FileField(
-        upload_to="publications/",
-    )
-
-    media_type = models.CharField(
-        max_length=10,
-        choices=MediaType.choices,
-    )
-
-    order = models.PositiveIntegerField(
-        default=0,
-    )
-
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-    )
-
-    class Meta:
-        ordering = ["order", "created_at"]
-
-    def __str__(self) -> str:
-        return f"{self.media_type} " f"for publication {self.publication_id}"
 
 
 class PublicationLike(models.Model):
@@ -149,9 +111,6 @@ class Comment(models.Model):
         auto_now_add=True,
     )
 
-    updated_at = models.DateTimeField(
-        auto_now=True,
-    )
 
     class Meta:
         ordering = ["-created_at"]

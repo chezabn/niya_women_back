@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from niya import settings
+from publication.pagination import FeedPagination
 from .constants import (
     EMAIL_SUBJECT_VERIFICATION_REJECTED,
     EMAIL_BODY_VERIFICATION_REJECTED,
@@ -21,7 +22,7 @@ from .constants import (
 from .models import IdentityVerificationRequest
 from .serializers import (
     VerificationRequestSerializer,
-    AdminVerificationReviewSerializer,
+    AdminVerificationReviewSerializer, IdentityVerificationDetailSerializer,
 )
 
 
@@ -112,12 +113,6 @@ class SubmitIdentityVerificationView(APIView):
                     username=user.username,
                     email=user.email,
                     created_at=obj.created_at.strftime("%d/%m/%Y à %H:%M"),
-                    id_card_url=(
-                        obj.id_card_front.url if obj.id_card_front else "Non fourni"
-                    ),
-                    selfie_url=(
-                        obj.selfie_with_id.url if obj.selfie_with_id else "Non fourni"
-                    ),
                     admin_link=admin_link,
                 )
 
@@ -125,10 +120,9 @@ class SubmitIdentityVerificationView(APIView):
 
                 admin_email_list = list(
                     get_user_model()
-                    .objects.filter(is_superuser=True)
+                    .objects.filter(is_staff=True)
                     .values_list("email", flat=True)
                 )
-
                 send_mail(
                     subject=EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
                     message=message_body,
@@ -155,6 +149,17 @@ class AdminReviewIdentityView(APIView):
 
     permission_classes = [permissions.IsAdminUser]
 
+    @staticmethod
+    def delete_verification_images(verification_req):
+        image_fields = ("id_card_front", "selfie_with_id")
+        for field_name in image_fields:
+            image = getattr(verification_req, field_name)
+            if image and image.name:
+                image.storage.delete(image.name)
+                setattr(verification_req, field_name, "")
+
+        verification_req.save(update_fields=image_fields)
+
     def post(self, request, pk):
         verification_req = get_object_or_404(IdentityVerificationRequest, pk=pk)
         serializer = AdminVerificationReviewSerializer(data=request.data)
@@ -165,6 +170,7 @@ class AdminReviewIdentityView(APIView):
             if action == "approve":
                 # 1. Valider la demande (change le statut et active le compte)
                 verification_req.approve(request.user)
+                self.delete_verification_images(verification_req)
                 # 2. Envoyer l'email de félicitations
                 try:
                     send_mail(
@@ -192,6 +198,7 @@ class AdminReviewIdentityView(APIView):
                 reason = data.get("rejection_reason", "Non spécifié")
                 # 1. Rejeter la demande
                 verification_req.reject(request.user, reason)
+                self.delete_verification_images(verification_req)
                 # 2. Envoyer l'email de rejet
                 try:
                     send_mail(
@@ -215,3 +222,94 @@ class AdminReviewIdentityView(APIView):
                 )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class AdminIdentityVerificationListView(APIView):
+    """
+    Permet à un membre de l'équipe de validation de consulter
+    toutes les demandes de vérification d'identité.
+    """
+
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        verification_requests = (
+            IdentityVerificationRequest.objects
+            .select_related("user", "reviewed_by")
+            .order_by("-created_at")
+        )
+
+        status_filter = request.query_params.get("status", "").strip().lower()
+        status_aliases = {
+            "pending": "PENDING",
+            "approved": "APPROVED",
+            "approve": "APPROVED",
+            "rejected": "REJECTED",
+            "reject": "REJECTED",
+        }
+        if status_filter:
+            if status_filter not in status_aliases:
+                return Response(
+                    {"status": "Valeur invalide. Utilisez pending, approved ou rejected."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            verification_requests = verification_requests.filter(
+                status=status_aliases[status_filter]
+            )
+
+        paginator = FeedPagination()
+        page = paginator.paginate_queryset(verification_requests, request, view=self)
+        serializer = IdentityVerificationDetailSerializer(
+            page,
+            many=True,
+        )
+
+        return paginator.get_paginated_response(serializer.data)
+
+class ReviewIdentityView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request, pk):
+        verification_request = get_object_or_404(
+            IdentityVerificationRequest,
+            pk=pk,
+        )
+
+        serializer = IdentityVerificationDetailSerializer(
+            verification_request
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+class IdentityVerificationStatusView(APIView):
+    """
+    Permet à l'utilisatrice de consulter le statut de sa demande
+    de vérification d'identité.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            verification_request = request.user.identity_request
+        except IdentityVerificationRequest.DoesNotExist:
+            return Response(
+                {
+                    "has_request": False,
+                    "status": None,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        return Response(
+            {
+                "has_request": True,
+                "status": verification_request.status,
+                "rejection_reason": verification_request.rejection_reason,
+                "created_at": verification_request.created_at,
+                "updated_at": verification_request.updated_at,
+            },
+            status=status.HTTP_200_OK,
+        )

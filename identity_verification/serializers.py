@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from users.serializers import UserPreviewSerializer
 from .models import IdentityVerificationRequest
 
 
@@ -23,3 +24,24 @@ class AdminVerificationReviewSerializer(serializers.Serializer):
                 "Une raison est obligatoire pour un rejet."
             )
         return data
+
+
+class IdentityVerificationDetailSerializer(serializers.ModelSerializer):
+    user = UserPreviewSerializer(read_only=True)
+
+    class Meta:
+        model = IdentityVerificationRequest
+        fields = [
+            "id",
+            "user",
+            "id_card_front",
+            "selfie_with_id",
+            "status",
+            "ai_score",
+            "ai_details",
+            "reviewed_by",
+            "reviewed_at",
+            "rejection_reason",
+            "created_at",
+            "updated_at",
+        ]

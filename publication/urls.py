@@ -1,8 +1,7 @@
-from django.urls import include
-from django.urls import path
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import PublicationViewSet
+from .views import CommentViewSet, PublicationViewSet, PublicationLikeView
 
 router = DefaultRouter()
 
@@ -12,6 +11,21 @@ router.register(
     basename="publications",
 )
 
+router.register(
+    "comments",
+    CommentViewSet,
+    basename="comments",
+)
+
+
 urlpatterns = [
-    path("", include(router.urls)),
+    path(
+        "",
+        include(router.urls),
+    ),
+    path(
+        "publications/<int:publication_id>/like/",
+        PublicationLikeView.as_view(),
+        name="publication-like",
+    ),
 ]

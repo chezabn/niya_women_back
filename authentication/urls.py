@@ -7,7 +7,7 @@ from .views import (
     SendVerificationCodeView,
     VerifyEmailView,
     ConfirmPasswordResetView,
-    RequestPasswordResetView,
+    RequestPasswordResetView, ReactivateAccountAPIView,
 )
 
 urlpatterns = [
@@ -16,6 +16,7 @@ urlpatterns = [
     # Authentication (Register and Login)
     path("register/", RegisterAPIView.as_view(), name="register_api"),
     path("login/", LoginAPIView.as_view(), name="login_api"),
+    path("reactivate/", ReactivateAccountAPIView.as_view(), name="reactivate_account"),
     # Email verification
     path(
         "send-verification-code/",
