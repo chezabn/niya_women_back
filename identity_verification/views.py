@@ -113,12 +113,6 @@ class SubmitIdentityVerificationView(APIView):
                     username=user.username,
                     email=user.email,
                     created_at=obj.created_at.strftime("%d/%m/%Y à %H:%M"),
-                    id_card_url=(
-                        obj.id_card_front.url if obj.id_card_front else "Non fourni"
-                    ),
-                    selfie_url=(
-                        obj.selfie_with_id.url if obj.selfie_with_id else "Non fourni"
-                    ),
                     admin_link=admin_link,
                 )
 
@@ -126,10 +120,9 @@ class SubmitIdentityVerificationView(APIView):
 
                 admin_email_list = list(
                     get_user_model()
-                    .objects.filter(is_superuser=True)
+                    .objects.filter(is_staff=True)
                     .values_list("email", flat=True)
                 )
-# TODO CHANGER LE MAIL DE NOTIFICATION
                 send_mail(
                     subject=EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
                     message=message_body,

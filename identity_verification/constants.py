@@ -54,14 +54,12 @@ Une nouvelle demande de vérification d'identité vient d'être soumise sur la p
 📅 Date de la demande : {created_at}
 
 📂 Documents disponibles :
-- Pièce d'identité : {id_card_url}
-- Selfie avec pièce : {selfie_url}
+- Pièce d'identité
+- Selfie avec pièce
 
 👉 Action requise :
 Veuillez examiner ces documents et valider ou rejeter la demande depuis l'interface d'administration.
 
-Lien vers le dossier dans l'admin :
-{admin_link}
 
 Merci de traiter cette demande dans les plus brefs délais pour permettre à la membre d'accéder à la communauté.
 
