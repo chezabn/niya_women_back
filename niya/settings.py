@@ -69,6 +69,7 @@ INSTALLED_APPS = [
     "publication",
     "follower",
     "journal",
+    "storages",
 ]
 
 MIDDLEWARE = [
@@ -134,6 +135,22 @@ DATABASES = {
         "PORT": os.getenv("MYSQL_PORT", 5000),
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": os.getenv("CLOUDFLARE_BUCKET_NAME"),
+            "endpoint_url": os.getenv('CLOUDFLARE_S3_ENDPOINT_URL'),
+            "access_key": os.getenv("CLOUDFLARE_ACCESS_KEY_ID"),
+            "secret_key": os.getenv("CLOUDFLARE_SECRET_ACCESS_KEY"),
+            "region_name": "auto",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }
 
 import sys

@@ -24,8 +24,8 @@ class IdentityVerificationRequest(models.Model):
     )
 
     # Photos fournies
-    id_card_front = models.ImageField(upload_to="verifications/id_cards/%Y/%m/%d/")
-    selfie_with_id = models.ImageField(upload_to="verifications/selfies/%Y/%m/%d/")
+    id_card_front = models.ImageField(upload_to="verifications/%Y%m%d/")
+    selfie_with_id = models.ImageField(upload_to="verifications/%Y%m%d/")
 
     # Champs pour évolution future (IA / API Externe)
     # On les garde nullable pour l'instant (validation manuelle pure)
