@@ -1,103 +1,343 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from libs.permissions import IsFullyAuthenticated, IsPublicationOwner
-from .models import (
-    Comment,
-    Publication,
-    PublicationLike,
+from libs.permissions import (
+    IsCommentOwner,
+    IsFullyAuthenticated,
+    IsPublicationOwner,
 )
+from users.models import UserBlock
+
+from .models import Comment, Publication, PublicationLike
 from .pagination import FeedPagination
-from .serializers import (
-    CommentSerializer,
-    PublicationCreateSerializer,
-    PublicationDetailSerializer,
-    PublicationFeedSerializer,
-)
+from .serializers import CommentSerializer, PublicationSerializer, PublicationLikeSerializer
 
 
 class PublicationViewSet(ModelViewSet):
-    permission_classes = [IsFullyAuthenticated]
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
 
+    serializer_class = PublicationSerializer
     pagination_class = FeedPagination
 
-    queryset = (
-        Publication.objects.select_related("author")
-        .prefetch_related(
-            "medias",
-            "likes",
-            "comments",
+    def get_queryset(self):
+        queryset = Publication.objects.filter(
+            is_archived=False,
         )
-        .all()
-    )
+
+        blocked_ids = UserBlock.objects.filter(
+            Q(blocker=self.request.user) | Q(blocked=self.request.user)
+        ).values_list("blocked_id", "blocker_id")
+
+        hidden_ids = {pk for pair in blocked_ids for pk in pair}
+
+        # Never hide the authenticated user's own publications.
+        hidden_ids.discard(self.request.user.pk)
+
+        queryset = queryset.exclude(author_id__in=hidden_ids)
+
+        if self.action == "my_publications":
+            queryset = queryset.filter(
+                author=self.request.user,
+            )
+        elif self.action == "list":
+            queryset = queryset.exclude(
+                author=self.request.user,
+            )
+
+        return queryset.order_by("-created_at")
 
     def get_permissions(self):
         if self.action in [
             "update",
             "partial_update",
             "destroy",
+            "my_detail",
         ]:
             return [
                 IsFullyAuthenticated(),
                 IsPublicationOwner(),
             ]
 
-        return [IsFullyAuthenticated()]
-
-    def get_serializer_class(self):
-        if self.action == "create":
-            return PublicationCreateSerializer
-
-        if self.action == "retrieve":
-            return PublicationDetailSerializer
-
-        return PublicationFeedSerializer
-
-    def get_serializer_context(self):
-        return {
-            "request": self.request,
-        }
+        return [
+            IsFullyAuthenticated(),
+        ]
 
     def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+        serializer.save(
+            author=self.request.user,
+        )
 
     def perform_update(self, serializer):
-        serializer.save(is_edited=True)
+        serializer.save(
+            is_edited=True,
+        )
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="me",
+    )
+    def my_publications(self, request):
+        publications = self.get_queryset()
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = self.get_serializer(
+            publications,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
 
     @action(
         detail=True,
-        methods=["POST"],
-        url_path="like",
+        methods=["GET"],
+        url_path="me",
     )
-    def like(self, request, pk=None):
+    def my_detail(self, request, pk=None):
         publication = self.get_object()
+
+        serializer = self.get_serializer(
+            publication,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=True,
+        methods=["GET"],
+        url_path="comments",
+    )
+    def comments(self, request, pk=None):
+        publication = self.get_object()
+
+        comments = Comment.objects.filter(
+            publication=publication,
+        ).select_related(
+            "author",
+        ).order_by(
+            "-created_at",
+        )
+
+        page = self.paginate_queryset(comments)
+
+        if page is not None:
+            serializer = CommentSerializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = CommentSerializer(
+            comments,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path="liked",
+    )
+    def liked_publications(self, request):
+        publications = self.get_queryset().filter(
+            likes__user=request.user,
+        ).distinct()
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = self.get_serializer(
+            publications,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(
+        detail=False,
+        methods=["GET"],
+        url_path=r"user/(?P<user_id>[0-9]+)",
+    )
+    def user_publications(self, request, user_id=None):
+        publications = self.get_queryset().filter(
+            author_id=user_id,
+        )
+
+        page = self.paginate_queryset(publications)
+
+        if page is not None:
+            serializer = self.get_serializer(
+                page,
+                many=True,
+            )
+
+            return self.get_paginated_response(
+                serializer.data,
+            )
+
+        serializer = self.get_serializer(
+            publications,
+            many=True,
+        )
+
+        return Response(
+            serializer.data,
+            status=status.HTTP_200_OK,
+        )
+
+
+class CommentViewSet(ModelViewSet):
+    """
+    CRUD operations for comments.
+    """
+
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
+
+    serializer_class = CommentSerializer
+    pagination_class = FeedPagination
+
+    http_method_names = [
+        "get",
+        "post",
+        "patch",
+        "delete",
+        "head",
+        "options",
+    ]
+
+    def get_queryset(self):
+        blocked_ids = UserBlock.objects.filter(
+            Q(blocker=self.request.user) | Q(blocked=self.request.user)
+        ).values_list("blocked_id", "blocker_id")
+        hidden_ids = {pk for pair in blocked_ids for pk in pair}
+        return Comment.objects.filter(
+            publication__is_archived=False,
+        ).exclude(author_id__in=hidden_ids).select_related(
+            "author",
+            "publication",
+        ).order_by(
+            "-created_at",
+        )
+
+    def get_permissions(self):
+        if self.action in [
+            "partial_update",
+            "destroy",
+        ]:
+            return [
+                IsFullyAuthenticated(),
+                IsCommentOwner(),
+            ]
+
+        return [
+            IsFullyAuthenticated(),
+        ]
+
+    def perform_create(self, serializer):
+        serializer.save(
+            author=self.request.user,
+        )
+
+
+class PublicationLikeView(APIView):
+    """
+    Like or unlike a publication.
+
+    POST:
+        Create a like for the authenticated user.
+
+    DELETE:
+        Remove the authenticated user's like.
+    """
+
+    permission_classes = [
+        IsFullyAuthenticated,
+    ]
+
+    def post(self, request, publication_id):
+        publication = get_object_or_404(
+            Publication,
+            id=publication_id,
+        )
 
         like, created = PublicationLike.objects.get_or_create(
             user=request.user,
             publication=publication,
         )
 
+        serializer = PublicationLikeSerializer(
+            like,
+        )
+
         if not created:
             return Response(
-                {"detail": "Already liked."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {
+                    "detail": "Vous avez déjà aimé cette publication.",
+                    "liked": True,
+                    "like": serializer.data,
+                },
+                status=status.HTTP_200_OK,
             )
 
         return Response(
-            {"detail": "Publication liked."},
+            {
+                "detail": "Publication aimée.",
+                "liked": True,
+                "like": serializer.data,
+            },
             status=status.HTTP_201_CREATED,
         )
 
-    @action(
-        detail=True,
-        methods=["DELETE"],
-        url_path="unlike",
-    )
-    def unlike(self, request, pk=None):
-        publication = self.get_object()
+    def delete(self, request, publication_id):
+        publication = get_object_or_404(
+            Publication,
+            id=publication_id,
+        )
 
         deleted_count, _ = PublicationLike.objects.filter(
             user=request.user,
@@ -106,40 +346,17 @@ class PublicationViewSet(ModelViewSet):
 
         if deleted_count == 0:
             return Response(
-                {"detail": "Like not found."},
-                status=status.HTTP_404_NOT_FOUND,
+                {
+                    "detail": "Vous n'avez pas aimé cette publication.",
+                    "liked": False,
+                },
+                status=status.HTTP_200_OK,
             )
 
         return Response(
-            {"detail": "Publication unliked."},
-            status=status.HTTP_204_NO_CONTENT,
-        )
-
-
-class CommentViewSet(ModelViewSet):
-    permission_classes = [IsFullyAuthenticated]
-
-    serializer_class = CommentSerializer
-
-    queryset = Comment.objects.select_related(
-        "author",
-        "publication",
-    ).all()
-
-    def get_serializer_context(self):
-        return {
-            "request": self.request,
-        }
-
-    def perform_create(self, serializer):
-        publication_id = self.kwargs.get("publication_pk")
-
-        publication = get_object_or_404(
-            Publication,
-            pk=publication_id,
-        )
-
-        serializer.save(
-            author=self.request.user,
-            publication=publication,
+            {
+                "detail": "Like retiré.",
+                "liked": False,
+            },
+            status=status.HTTP_200_OK,
         )

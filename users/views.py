@@ -3,19 +3,24 @@ import os
 from django.db import connections
 from django.db.models.query_utils import Q
 from rest_framework import status
-from rest_framework.generics import ListAPIView
+from rest_framework import serializers, status
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from follower.models import Follow
+from .models import UserBlock, UserReport
 
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
 from libs.permissions import IsFullyAuthenticated
+from publication.pagination import FeedPagination
 
 User = get_user_model()
 
@@ -136,6 +141,7 @@ class MyUserAPIView(APIView):
     def delete(self, request):
         user = request.user
         user.is_active = False
+        user.account_deactivated_by_user = True
         user.save()
         return Response(
             {"details": ACCOUNT_DEACTIVATED}, status=status.HTTP_204_NO_CONTENT
@@ -147,9 +153,7 @@ class UsersAPIView(ListAPIView):
     permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
-        return User.objects.exclude(pk=self.request.user.pk).filter(
-            is_superuser=False, is_active=True
-        )
+        return visible_users(self.request.user).exclude(pk=self.request.user.pk)
 
 
 class UserSearchAPIView(ListAPIView):
@@ -161,12 +165,118 @@ class UserSearchAPIView(ListAPIView):
     permission_classes = [IsFullyAuthenticated]
 
     def get_queryset(self):
-        queryset = User.objects.exclude(pk=self.request.user.pk).filter(
-            is_superuser=False, is_active=True
-        )
+        queryset = visible_users(self.request.user).exclude(pk=self.request.user.pk)
         query = self.request.query_params.get("q")
         if query:
             queryset = queryset.filter(
                 Q(username__icontains=query) | Q(profile__bio__icontains=query)
             )
         return queryset
+
+
+class UserDetailAPIView(RetrieveAPIView):
+    """
+    Retrieve the profile of a user by their ID.
+    """
+
+    serializer_class = UserSerializer
+    permission_classes = [IsFullyAuthenticated]
+
+    def get_queryset(self):
+        return visible_users(self.request.user)
+
+
+def visible_users(user):
+    blocked_ids = UserBlock.objects.filter(
+        Q(blocker=user) | Q(blocked=user)
+    ).values_list("blocked_id", "blocker_id")
+    ids = {pk for pair in blocked_ids for pk in pair}
+    # Keep the authenticated user's own profile accessible even when they
+    # participate in a block relationship.
+    ids.discard(user.pk)
+    return User.objects.filter(is_superuser=False, is_active=True).exclude(pk__in=ids)
+
+
+class BlockedUsersAPIView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def get(self, request):
+        users = (
+            User.objects.filter(
+                blocked_by_users__blocker=request.user
+            )
+            .select_related("profile")
+            .distinct()
+        )
+
+        paginator = FeedPagination()
+        page = paginator.paginate_queryset(users, request, view=self)
+
+        serializer = UserPreviewSerializer(page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+class UserBlockAPIView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def post(self, request, user_id):
+        target = get_object_or_404(User, pk=user_id, is_active=True, is_superuser=False)
+        if target == request.user:
+            return Response({"detail": "Vous ne pouvez pas bloquer votre propre compte."}, status=status.HTTP_400_BAD_REQUEST)
+        _, created = UserBlock.objects.get_or_create(blocker=request.user, blocked=target)
+        Follow.objects.filter(
+            Q(follower=request.user, followed=target) | Q(follower=target, followed=request.user)
+        ).delete()
+        return Response({"blocked": True}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+    def delete(self, request, user_id):
+        UserBlock.objects.filter(blocker=request.user, blocked_id=user_id).delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class UserReportAPIView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def post(self, request):
+        serializer = UserReportSerializer(
+            data=request.data,
+            context={"request": request},
+        )
+
+        if not serializer.is_valid():
+            user_id = request.data.get("user_id")
+
+            detail = next(
+                (
+                    str(error)
+                    for errors in serializer.errors.values()
+                    for error in errors
+                ),
+                "Impossible de transmettre le signalement.",
+            )
+
+            return Response(
+                {
+                    "id": user_id,
+                    "detail": detail,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        target = User.objects.get(
+            pk=serializer.validated_data["user_id"],
+        )
+
+        report = UserReport.objects.create(
+            reporter=request.user,
+            reported=target,
+            reason=serializer.validated_data["reason"],
+        )
+
+        return Response(
+            {
+                "id": report.id,
+                "detail": "Signalement transmis.",
+            },
+            status=status.HTTP_201_CREATED,
+        )

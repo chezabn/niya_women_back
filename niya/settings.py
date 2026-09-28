@@ -17,6 +17,8 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -43,6 +45,8 @@ ALLOWED_HOSTS = [
     "0.0.0.0",
     "niwo.alwaysdata.net",
     "www.niwo.alwaysdata.net",
+    "192.168.1.43",
+    "192.168.1.164"
 ]
 
 
@@ -57,18 +61,21 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "authentication",
     "identity_verification",
-    "users",
+    "users.apps.UsersConfig",
     "rest_framework",
     "rest_framework_simplejwt",
     "corsheaders",
     "company",
     "publication",
     "follower",
+    "journal",
+    "storages",
 ]
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "libs.api_errors.ErrorResponseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -108,6 +115,7 @@ REST_FRAMEWORK = {
     ),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 20,
+    "EXCEPTION_HANDLER": "libs.api_errors.api_exception_handler",
 }
 
 SIMPLE_JWT = {
@@ -129,6 +137,22 @@ DATABASES = {
         "PORT": os.getenv("MYSQL_PORT", 5000),
         "OPTIONS": {"init_command": "SET sql_mode='STRICT_TRANS_TABLES'"},
     }
+}
+
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3.S3Storage",
+        "OPTIONS": {
+            "bucket_name": os.getenv("CLOUDFLARE_BUCKET_NAME"),
+            "endpoint_url": os.getenv('CLOUDFLARE_S3_ENDPOINT_URL'),
+            "access_key": os.getenv("CLOUDFLARE_ACCESS_KEY_ID"),
+            "secret_key": os.getenv("CLOUDFLARE_SECRET_ACCESS_KEY"),
+            "region_name": "auto",
+        },
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+    },
 }
 
 import sys

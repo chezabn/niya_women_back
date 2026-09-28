@@ -1,0 +1,21 @@
+meta {
+  name: Get Status Of Verification
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/api/identification/identity/status/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1NzY2ODc3LCJpYXQiOjE3OTA1ODI4NzcsImp0aSI6ImRkZWI5NDJjMDRlMDQyNWU5MDM2YTM3MWY3M2I5Mjg2IiwidXNlcl9pZCI6Njd9.lEz_Dh7z57KJzkjmuliDIie9xiFtHLpJXEXNnnJnj-Q
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}

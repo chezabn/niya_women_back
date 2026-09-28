@@ -1,0 +1,21 @@
+meta {
+  name: Get All Pages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{URL}}/api/journal/journals/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer  eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1NTA3NTYwLCJpYXQiOjE3OTAzMjM1NjAsImp0aSI6ImEwMzU0MWNkZjg1ZjQ0OGU4OTMwYjBlNjZhNDE3MWI4IiwidXNlcl9pZCI6NjR9.gO6AeRabWH42Y8dZFyJ78tl-rpQ9m59v0kq-5WLqMEU
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}
