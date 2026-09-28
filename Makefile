@@ -70,7 +70,7 @@ test-comp:
 test-publ:
 	python manage.py test publication
 
-## test: test all app in project
+## test: run the complete test suite for every Django application
 .PHONY: test
 test:
 	python manage.py test

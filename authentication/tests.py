@@ -1,5 +1,6 @@
 from django.urls import reverse
 from django.utils import timezone
+from unittest.mock import patch
 from rest_framework import status
 from rest_framework.test import APITestCase
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -53,7 +54,7 @@ class RegisterTests(APITestCase):
         response = self.client.post(self.url, payload)
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", response.data or response.data.keys())
+        self.assertIn("email", response.data["detail"])
 
 
 class LoginTests(APITestCase):
@@ -88,8 +89,8 @@ class LoginTests(APITestCase):
         user.save()
         response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_423_LOCKED)
-        self.assertIn("locked_until", response.data)
-        self.assertIn("detail", response.data)
+        self.assertEqual(response.data["code"], "ACCOUNT_LOCKED")
+        self.assertIn("locked_until", response.data["detail"])
 
     def test_login_is_not_active(self):
         payload = {
@@ -176,13 +177,15 @@ class SendVerificationCodeTests(APITestCase):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_send_verification_code_success(self):
+    @patch("authentication.views.send_mail")
+    def test_send_verification_code_success(self, send_mail_mock):
         response = self.client.post(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("detail", response.data)
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.email_verification_code)
         self.assertIsNotNone(self.user.email_verification_code_expires)
+        send_mail_mock.assert_called_once()
 
 
 class VerifyEmailTests(APITestCase):
@@ -254,7 +257,8 @@ class RequestPasswordResetTests(APITestCase):
             password="StrongPassword123!",
         )
 
-    def test_request_password_reset_success_existing_email(self):
+    @patch("authentication.views.send_mail")
+    def test_request_password_reset_success_existing_email(self, send_mail_mock):
         payload = {"email": "test@example.com"}
         response = self.client.post(self.url, payload)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -262,6 +266,7 @@ class RequestPasswordResetTests(APITestCase):
         self.user.refresh_from_db()
         self.assertIsNotNone(self.user.password_reset_code)
         self.assertIsNotNone(self.user.password_reset_code_expires)
+        send_mail_mock.assert_called_once()
 
     def test_request_password_reset_success_non_existing_email(self):
         payload = {"email": "unknown@example.com"}
