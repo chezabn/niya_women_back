@@ -6,16 +6,19 @@ from rest_framework import status
 from rest_framework import serializers, status
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
+from django.core.mail import send_mail
+from niya import settings
 from follower.models import Follow
 from .models import UserBlock, UserReport
 
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer, UserReportDetailSerializer
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
@@ -273,6 +276,24 @@ class UserReportAPIView(APIView):
             reason=serializer.validated_data["reason"],
         )
 
+        staff_emails = list(
+            User.objects.filter(is_staff=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
+        )
+        if staff_emails:
+            send_mail(
+                subject="Nouveau signalement sur Niya",
+                message=(
+                    f"Un nouveau signalement a été transmis par {request.user.username}.\n"
+                    f"Compte signalé : {target.username}.\n"
+                    f"Motif : {report.reason}"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=staff_emails,
+                fail_silently=True,
+            )
+
         return Response(
             {
                 "id": report.id,
@@ -280,3 +301,10 @@ class UserReportAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class AdminUserReportsAPIView(ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = UserReportDetailSerializer
+    pagination_class = FeedPagination
+    queryset = UserReport.objects.select_related("reporter", "reported").all()

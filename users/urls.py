@@ -9,6 +9,7 @@ from .views import (
     BlockedUsersAPIView,
     UserBlockAPIView,
     UserReportAPIView,
+    AdminUserReportsAPIView,
 )
 
 urlpatterns = [
@@ -40,4 +41,5 @@ urlpatterns = [
     path("block/", BlockedUsersAPIView.as_view(), name="blocked_users"),
     path("<int:user_id>/block/", UserBlockAPIView.as_view(), name="user_block"),
     path("reports/", UserReportAPIView.as_view(), name="user_report"),
+    path("reports/all/", AdminUserReportsAPIView.as_view(), name="admin_user_reports"),
 ]

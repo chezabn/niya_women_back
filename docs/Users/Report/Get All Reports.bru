@@ -1,0 +1,28 @@
+meta {
+  name: Get All Reports
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{URL}}/api/users/reports/all/
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk1ODg1NDQ3LCJpYXQiOjE3OTA3MDE0NDcsImp0aSI6IjEyMWNjZmQ2NDZkYzQ3YWY5MjRlN2NiYTgxYjIyMmFjIiwidXNlcl9pZCI6NjN9.zaL4PtL3SBM1jdG3LgO6WEBj_RIkts0MQd3DH8aAQsA
+}
+
+body:json {
+  {
+      "user_id": 63,
+      "reason": "Cette utilisatrice publie du contenu qui ne respecte pas les règles."
+  }
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+  forwardAuthorizationHeader: false
+}

@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from libs.errors import EMAIL_ALREADY_REGISTERED
-from .models import UserProfile
+from .models import UserProfile, UserReport
 
 User = get_user_model()
 
@@ -101,3 +101,12 @@ class UserReportSerializer(serializers.Serializer):
         if not value.strip():
             raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
         return value.strip()
+
+
+class UserReportDetailSerializer(serializers.ModelSerializer):
+    reporter = serializers.StringRelatedField()
+    reported = serializers.StringRelatedField()
+
+    class Meta:
+        model = UserReport
+        fields = ["id", "reporter", "reported", "reason", "created_at"]
