@@ -40,13 +40,9 @@ else:
     CSRF_COOKIE_SECURE = True
 
 ALLOWED_HOSTS = [
+    "api.niyya-women.com",
     "localhost",
     "127.0.0.1",
-    "0.0.0.0",
-    "niwo.alwaysdata.net",
-    "www.niwo.alwaysdata.net",
-    "192.168.1.43",
-    "192.168.1.164"
 ]
 
 
