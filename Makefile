@@ -120,7 +120,7 @@ stop-api:
 ## stop-dev: stop container of niyya app
 .PHONY: stop-dev
 stop-dev:
-	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women down
+	docker compose -f ./docker/docker-compose.yml --project-name niyya-women down
 
 # ==================================================================================== #
 # RUN ALL SERVICES
@@ -139,4 +139,4 @@ run-api: stop-api docker-build-api
 ## run-dev: run container of niyya app
 .PHONY: run-dev
 run-dev: stop-dev docker-build-api
-	docker compose --env-file .env.dev -f ./docker/docker-compose.yml --project-name niyya-women up -d
+	docker compose -f ./docker/docker-compose.yml --project-name niyya-women up -d

@@ -209,11 +209,12 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 AUTH_USER_MODEL = "authentication.User"
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_HOST = "smtp.gmail.com"
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "saad.rafiqul1@gmail.com")
+EMAIL_HOST = os.getenv("EMAIL_HOST")
+EMAIL_PORT = os.getenv("EMAIL_PORT", 587)
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", True)
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", True)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "contact@niyya-women.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL", "Niyya Women <saad.rafiqul1@gmail.com>"
+    "DEFAULT_FROM_EMAIL", "Niyya Women <contact@niyya-women.com>"
 )
