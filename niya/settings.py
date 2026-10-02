@@ -27,7 +27,7 @@ MEDIA_ROOT = BASE_DIR / "media"
 SECRET_KEY = "django-insecure-0v$xm(hfzo@rsywq9=uzpt7i%@z3n9dr#1^4afb#n@b934l6d@"
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", True)
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
 if DEBUG:
     SECURE_SSL_REDIRECT = False
@@ -195,7 +195,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
