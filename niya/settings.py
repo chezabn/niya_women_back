@@ -43,6 +43,7 @@ ALLOWED_HOSTS = [
     "api.niyya-women.com",
     "localhost",
     "127.0.0.1",
+    "192.168.1.43",
 ]
 
 
