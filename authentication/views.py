@@ -1,7 +1,6 @@
 import os
 
 from django.conf import settings
-from django.contrib.auth import authenticate
 from django.core.mail import send_mail
 from django.db import connections
 from django.utils import timezone
