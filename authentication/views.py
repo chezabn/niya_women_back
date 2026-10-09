@@ -369,13 +369,17 @@ class LoginAPIView(TokenObtainPairView):
             if user.is_account_locked():
                 return Response(
                     {
+                        "code": "ACCOUNT_LOCKED",
                         "detail": ACCOUNT_LOCKED,
                     },
                     status=status.HTTP_423_LOCKED,
                 )
 
             return Response(
-                {"detail": PASSWORD_FAILED.format(e=e)},
+                {
+                    "code": "AUTHENTICATION_FAILED",
+                    "detail": PASSWORD_FAILED.format(e=e)
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
