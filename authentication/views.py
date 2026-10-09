@@ -313,7 +313,7 @@ class LoginAPIView(TokenObtainPairView):
             - 423 Locked:
                 Account temporarily locked after multiple failed attempts.
         """
-        username = request.data.get("username")
+        username = request.data.get("username").strip().lower()
 
         # Check if username exists
         try:
