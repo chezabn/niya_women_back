@@ -1,4 +1,9 @@
 from django.shortcuts import get_object_or_404
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAdminUser
 from django.db.models import Q
 from rest_framework import status
 from rest_framework.decorators import action
@@ -13,9 +18,10 @@ from libs.permissions import (
 )
 from users.models import UserBlock
 
-from .models import Comment, Publication, PublicationLike
+from .models import Comment, Publication, PublicationLike, PublicationReport
 from .pagination import FeedPagination
-from .serializers import CommentSerializer, PublicationSerializer, PublicationLikeSerializer
+from .serializers import (CommentSerializer, PublicationSerializer, PublicationLikeSerializer,
+                          PublicationReportSerializer, PublicationReportDetailSerializer)
 
 
 class PublicationViewSet(ModelViewSet):
@@ -360,3 +366,51 @@ class PublicationLikeView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class PublicationReportView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def post(self, request, publication_id):
+        publication = get_object_or_404(Publication, pk=publication_id, is_archived=False)
+        if publication.author_id == request.user.pk:
+            return Response(
+                {"detail": "Vous ne pouvez pas signaler votre propre publication."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = PublicationReportSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        report = PublicationReport.objects.create(
+            reporter=request.user,
+            publication=publication,
+            reason=serializer.validated_data["reason"],
+        )
+        staff_emails = list(
+            get_user_model().objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True)
+        )
+        if staff_emails:
+            send_mail(
+                subject="Nouveau signalement de publication sur Niya",
+                message=(
+                    f"Un signalement a été transmis par {request.user.username}.\n"
+                    f"Publication : {publication.pk}, auteur : {publication.author.username}.\n"
+                    f"Motif : {report.reason}"
+                ),
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=staff_emails,
+                fail_silently=True,
+            )
+        return Response(
+            {"id": report.id, "detail": "Signalement transmis."},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AdminPublicationReportsView(ListAPIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = PublicationReportDetailSerializer
+    pagination_class = FeedPagination
+    queryset = PublicationReport.objects.select_related("reporter", "publication", "publication__author")

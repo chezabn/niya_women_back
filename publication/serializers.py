@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Publication, Comment, PublicationLike
+from .models import Publication, Comment, PublicationLike, PublicationReport
 
 User = get_user_model()
 
@@ -151,3 +151,21 @@ class PublicationLikeSerializer(serializers.ModelSerializer):
             "publication",
             "created_at",
         ]
+
+
+class PublicationReportSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
+
+    def validate_reason(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
+        return value.strip()
+
+
+class PublicationReportDetailSerializer(serializers.ModelSerializer):
+    reporter = serializers.StringRelatedField()
+    publication = serializers.IntegerField(source="publication_id", read_only=True)
+
+    class Meta:
+        model = PublicationReport
+        fields = ["id", "reporter", "publication", "reason", "created_at"]

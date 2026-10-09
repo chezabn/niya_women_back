@@ -1,17 +1,27 @@
 meta {
-  name: Get All Publications
+  name: Post Report Publication
   type: http
-  seq: 1
+  seq: 9
 }
 
-get {
-  url: {{URL}}/api/publications/publications/
-  body: none
+post {
+  url: {{URL}}/api/publications/publications/:id/report/
+  body: json
   auth: inherit
+}
+
+params:path {
+  id: 66
 }
 
 headers {
   Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzk2NzA2OTQ2LCJpYXQiOjE3OTE1MjI5NDYsImp0aSI6IjE1Yzc1ZmJhNWMxNzQwZjFhZWI2MGMwZTQwMDNkOTNlIiwidXNlcl9pZCI6NjR9.nOpb0gUx27M9iUd6ULXszmgEWT_WWg2NBKtaoRv-xdE
+}
+
+body:json {
+  {
+    "reason": "Cette publication contient des propos insultants."
+  }
 }
 
 settings {

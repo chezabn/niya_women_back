@@ -117,3 +117,24 @@ class Comment(models.Model):
 
     def __str__(self) -> str:
         return f"Comment {self.pk}"
+
+
+class PublicationReport(models.Model):
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="publication_reports_filed",
+    )
+    publication = models.ForeignKey(
+        Publication,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    reason = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"Report for publication {self.publication_id}"

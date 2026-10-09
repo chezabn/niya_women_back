@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Comment, Publication, PublicationLike
+from .models import Comment, Publication, PublicationLike, PublicationReport
 
 
 @admin.register(Publication)
@@ -107,3 +107,27 @@ class CommentAdmin(admin.ModelAdmin):
         if len(obj.description) > 60:
             return f"{obj.description[:60]}..."
         return obj.description
+
+
+@admin.register(PublicationReport)
+class PublicationReportAdmin(admin.ModelAdmin):
+    list_display = ("id", "publication", "reported_author", "reporter", "reason_preview", "created_at")
+    list_filter = ("created_at",)
+    search_fields = ("publication__caption", "publication__author__username", "reporter__username", "reason")
+    readonly_fields = ("publication", "reporter", "reason", "created_at")
+    ordering = ("-created_at",)
+    list_select_related = ("publication", "publication__author", "reporter")
+
+    @admin.display(description="Auteur signalé")
+    def reported_author(self, obj):
+        return obj.publication.author.username
+
+    @admin.display(description="Motif")
+    def reason_preview(self, obj):
+        return obj.reason if len(obj.reason) <= 80 else obj.reason[:80] + "..."
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
