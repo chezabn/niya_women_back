@@ -21,7 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         ]
 
     def validate_username(self, value):
-        return value.lower()
+        return value.strip().lower()
 
     def validate(self, data):
         if User.objects.filter(username=data["username"]).exists():
