@@ -20,6 +20,9 @@ class RegisterSerializer(serializers.ModelSerializer):
             "accept_cgu",
         ]
 
+    def validate_username(self, value):
+        return value.lower()
+
     def validate(self, data):
         if User.objects.filter(username=data["username"]).exists():
             raise serializers.ValidationError(

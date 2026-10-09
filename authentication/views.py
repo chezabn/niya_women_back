@@ -320,7 +320,11 @@ class LoginAPIView(TokenObtainPairView):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(
-                {"detail": USER_NOT_FOUND}, status=status.HTTP_404_NOT_FOUND
+                {
+                    "code": "AUTHENTICATION_FAILED",
+                    "detail": USER_NOT_FOUND
+                },
+                status=status.HTTP_404_NOT_FOUND
             )
 
         # Check if account is locked
@@ -425,6 +429,7 @@ class ReactivateAccountAPIView(APIView):
         except User.DoesNotExist:
             return Response(
                 {
+                    "code": "AUTHENTICATION_FAILED",
                     "detail": USER_NOT_FOUND,
                 },
                 status=status.HTTP_404_NOT_FOUND,
