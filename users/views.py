@@ -18,12 +18,13 @@ from .models import UserBlock, UserReport
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer, UserReportDetailSerializer
+from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer, UserReportDetailSerializer, ExpoPushTokenSerializer
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
 from libs.permissions import IsFullyAuthenticated
 from publication.pagination import FeedPagination
+from notifications.models import ExpoPushToken
 
 User = get_user_model()
 
@@ -149,6 +150,19 @@ class MyUserAPIView(APIView):
         return Response(
             {"details": ACCOUNT_DEACTIVATED}, status=status.HTTP_204_NO_CONTENT
         )
+
+
+class ExpoPushTokenAPIView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def post(self, request):
+        serializer = ExpoPushTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ExpoPushToken.objects.update_or_create(
+            token=serializer.validated_data["push_token"],
+            defaults={"user": request.user},
+        )
+        return Response({"detail": "Jeton push enregistré."}, status=status.HTTP_200_OK)
 
 
 class UsersAPIView(ListAPIView):

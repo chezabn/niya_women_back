@@ -8,6 +8,8 @@ from rest_framework.views import APIView
 
 from users.models import UserBlock
 from users.serializers import UserPreviewSerializer
+from notifications.models import Notification
+from notifications.services import create_notification
 from publication.pagination import FeedPagination
 
 from .models import Follow
@@ -75,6 +77,11 @@ class FollowView(APIView):
             follower=request.user, followed=target_user
         )
         if created:
+            create_notification(
+                recipient=target_user,
+                actor=request.user,
+                notification_type=Notification.Type.FOLLOW,
+            )
             return Response(
                 {"message": "Now following"}, status=status.HTTP_201_CREATED
             )

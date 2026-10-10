@@ -10,6 +10,7 @@ from .views import (
     UserBlockAPIView,
     UserReportAPIView,
     AdminUserReportsAPIView,
+    ExpoPushTokenAPIView,
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
         MyUserAPIView.as_view(),
         name="my_user",
     ),
+    path("me/push-token/", ExpoPushTokenAPIView.as_view(), name="my_push_token"),
     path(
         "all/",
         UsersAPIView.as_view(),

@@ -4,6 +4,15 @@ from rest_framework import serializers
 from libs.errors import EMAIL_ALREADY_REGISTERED
 from .models import UserProfile, UserReport
 
+
+class ExpoPushTokenSerializer(serializers.Serializer):
+    push_token = serializers.CharField(max_length=255, trim_whitespace=True)
+
+    def validate_push_token(self, value):
+        if not value.startswith(("ExpoPushToken[", "ExponentPushToken[")) or not value.endswith("]"):
+            raise serializers.ValidationError("Jeton Expo Push invalide.")
+        return value
+
 User = get_user_model()
 
 
