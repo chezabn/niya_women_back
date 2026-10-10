@@ -16,6 +16,8 @@ from libs.permissions import (
     IsFullyAuthenticated,
     IsPublicationOwner,
 )
+from notifications.models import Notification
+from notifications.services import create_notification
 from users.models import UserBlock
 
 from .models import Comment, Publication, PublicationLike, PublicationReport
@@ -285,8 +287,14 @@ class CommentViewSet(ModelViewSet):
         ]
 
     def perform_create(self, serializer):
-        serializer.save(
+        comment = serializer.save(
             author=self.request.user,
+        )
+        create_notification(
+            recipient=comment.publication.author,
+            actor=self.request.user,
+            notification_type=Notification.Type.COMMENT,
+            publication=comment.publication,
         )
 
 
@@ -329,6 +337,13 @@ class PublicationLikeView(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
+
+        create_notification(
+            recipient=publication.author,
+            actor=request.user,
+            notification_type=Notification.Type.LIKE,
+            publication=publication,
+        )
 
         return Response(
             {

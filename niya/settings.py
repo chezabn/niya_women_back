@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "journal",
     "storages",
     "support",
+    "notifications",
 ]
 
 MIDDLEWARE = [
