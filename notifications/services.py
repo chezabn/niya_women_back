@@ -41,6 +41,18 @@ def _send_expo_push(notification_id):
         title = "Nouvel abonnement"
         body = f"{actor_name} a commencé à vous suivre."
         data = {"type": "profile", "user_id": notification.actor_id}
+    elif notification.notification_type == Notification.Type.IDENTITY_REQUEST:
+        title = "Nouvelle demande de vérification"
+        body = f"{actor_name} a envoyé une demande de vérification d’identité."
+        data = {"type": "identity_request"}
+    elif notification.notification_type == Notification.Type.IDENTITY_APPROVED:
+        title = "Identité vérifiée"
+        body = "Votre demande de vérification d’identité a été acceptée."
+        data = {"type": "identity_approved"}
+    elif notification.notification_type == Notification.Type.IDENTITY_REJECTED:
+        title = "Vérification d’identité refusée"
+        body = "Votre demande de vérification d’identité a été refusée. Consultez l’application pour la suite."
+        data = {"type": "identity_rejected"}
     else:
         return
 

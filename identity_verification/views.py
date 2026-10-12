@@ -20,6 +20,8 @@ from .constants import (
     EMAIL_BODY_NEW_VERIFICATION_REQUEST,
 )
 from .models import IdentityVerificationRequest
+from notifications.models import Notification
+from notifications.services import create_notification
 from .serializers import (
     VerificationRequestSerializer,
     AdminVerificationReviewSerializer, IdentityVerificationDetailSerializer,
@@ -105,6 +107,15 @@ class SubmitIdentityVerificationView(APIView):
         )
         if serializer.is_valid():
             obj = serializer.save(user=user)
+            from django.contrib.auth import get_user_model
+
+            admin_users = get_user_model().objects.filter(is_staff=True)
+            for admin_user in admin_users:
+                create_notification(
+                    recipient=admin_user,
+                    actor=user,
+                    notification_type=Notification.Type.IDENTITY_REQUEST,
+                )
             try:
                 admin_link = request.build_absolute_uri(
                     f"/api/identification/admin/identity/{obj.id}/review/"
@@ -116,13 +127,7 @@ class SubmitIdentityVerificationView(APIView):
                     admin_link=admin_link,
                 )
 
-                from django.contrib.auth import get_user_model
-
-                admin_email_list = list(
-                    get_user_model()
-                    .objects.filter(is_staff=True)
-                    .values_list("email", flat=True)
-                )
+                admin_email_list = list(admin_users.values_list("email", flat=True))
                 send_mail(
                     subject=EMAIL_SUBJECT_NEW_VERIFICATION_REQUEST,
                     message=message_body,
@@ -171,6 +176,11 @@ class AdminReviewIdentityView(APIView):
                 # 1. Valider la demande (change le statut et active le compte)
                 verification_req.approve(request.user)
                 self.delete_verification_images(verification_req)
+                create_notification(
+                    recipient=user,
+                    actor=request.user,
+                    notification_type=Notification.Type.IDENTITY_APPROVED,
+                )
                 # 2. Envoyer l'email de félicitations
                 try:
                     send_mail(
@@ -199,6 +209,11 @@ class AdminReviewIdentityView(APIView):
                 # 1. Rejeter la demande
                 verification_req.reject(request.user, reason)
                 self.delete_verification_images(verification_req)
+                create_notification(
+                    recipient=user,
+                    actor=request.user,
+                    notification_type=Notification.Type.IDENTITY_REJECTED,
+                )
                 # 2. Envoyer l'email de rejet
                 try:
                     send_mail(
