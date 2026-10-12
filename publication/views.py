@@ -4,7 +4,10 @@ from django.core.mail import send_mail
 from django.conf import settings
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser
-from django.db.models import Q
+from django.db.models import Count, Q
+from django.utils import timezone
+from datetime import timedelta
+import re
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -19,6 +22,7 @@ from libs.permissions import (
 from notifications.models import Notification
 from notifications.services import create_notification
 from users.models import UserBlock
+from follower.models import Follow
 
 from .models import Comment, Publication, PublicationLike, PublicationReport
 from .pagination import FeedPagination
@@ -33,6 +37,8 @@ class PublicationViewSet(ModelViewSet):
 
     serializer_class = PublicationSerializer
     pagination_class = FeedPagination
+
+    hashtag_pattern = re.compile(r"(?<!\w)#[\w-]+", re.UNICODE)
 
     def get_queryset(self):
         queryset = Publication.objects.filter(
@@ -58,8 +64,76 @@ class PublicationViewSet(ModelViewSet):
             queryset = queryset.exclude(
                 author=self.request.user,
             )
+        elif self.action == "for_you":
+            queryset = queryset.exclude(author=self.request.user)
 
         return queryset.order_by("-created_at")
+
+    def _for_you_publications(self):
+        """Order the feed using signals available in this project's models."""
+        user = self.request.user
+        queryset = self.get_queryset().annotate(
+            score_likes=Count("likes", distinct=True),
+            score_comments=Count("comments", distinct=True),
+        )
+
+        liked_ids = PublicationLike.objects.filter(user=user).values_list(
+            "publication_id", flat=True
+        )
+        commented_ids = Comment.objects.filter(author=user).values_list(
+            "publication_id", flat=True
+        )
+        interacted_ids = set(liked_ids) | set(commented_ids)
+        interests = set()
+        for caption in Publication.objects.filter(pk__in=interacted_ids).values_list(
+            "caption", flat=True
+        ):
+            interests.update(tag.casefold() for tag in self.hashtag_pattern.findall(caption))
+
+        followed_ids = set(Follow.objects.filter(follower=user).values_list(
+            "followed_id", flat=True
+        ))
+        # Interactions with an author count independently, with a cap of 15 points.
+        author_interactions = {}
+        for author_id, count in PublicationLike.objects.filter(user=user).values_list(
+            "publication__author_id"
+        ).annotate(total=Count("id")):
+            author_interactions[author_id] = author_interactions.get(author_id, 0) + count
+        for author_id, count in Comment.objects.filter(author=user).values_list(
+            "publication__author_id"
+        ).annotate(total=Count("id")):
+            author_interactions[author_id] = author_interactions.get(author_id, 0) + count
+
+        now = timezone.now()
+        scored = []
+        for publication in queryset:
+            tags = {tag.casefold() for tag in self.hashtag_pattern.findall(publication.caption)}
+            hashtag_score = min(30, len(tags & interests) * 10)
+            interaction_score = min(15, author_interactions.get(publication.author_id, 0) * 3)
+            popularity_score = min(
+                15, (publication.score_likes * 2) + (publication.score_comments * 3)
+            )
+            age = max(0, (now - publication.created_at).total_seconds())
+            freshness_score = max(0, 25 - (age / (7 * 24 * 60 * 60)) * 25)
+            score = (
+                (30 if publication.author_id in followed_ids else 0)
+                + hashtag_score + interaction_score + popularity_score + freshness_score
+            )
+            scored.append((score, publication.created_at, publication))
+
+        # With no personalization history, preserve the existing newest-first feed.
+        if not followed_ids and not interests and not author_interactions:
+            return [item[2] for item in sorted(scored, key=lambda item: item[1], reverse=True)]
+        return [item[2] for item in sorted(scored, key=lambda item: (item[0], item[1]), reverse=True)]
+
+    @action(detail=False, methods=["GET"], url_path="for-you")
+    def for_you(self, request):
+        publications = self._for_you_publications()
+        page = self.paginate_queryset(publications)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        return Response(self.get_serializer(publications, many=True).data, status=status.HTTP_200_OK)
 
     def get_permissions(self):
         if self.action in [
