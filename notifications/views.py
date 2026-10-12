@@ -44,6 +44,19 @@ class NotificationReadView(APIView):
         return Response({"is_read": True}, status=status.HTTP_200_OK)
 
 
+class NotificationDeleteView(APIView):
+    permission_classes = [IsFullyAuthenticated]
+
+    def delete(self, request, notification_id):
+        deleted, _ = Notification.objects.filter(
+            pk=notification_id,
+            recipient=request.user,
+        ).delete()
+        if not deleted:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
 class NotificationReadAllView(APIView):
     permission_classes = [IsFullyAuthenticated]
 
