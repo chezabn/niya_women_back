@@ -7,6 +7,9 @@ class Notification(models.Model):
         LIKE = "like", "Like"
         COMMENT = "comment", "Commentaire"
         FOLLOW = "follow", "Abonnement"
+        IDENTITY_REQUEST = "identity_request", "Demande de vérification d’identité"
+        IDENTITY_APPROVED = "identity_approved", "Demande de vérification acceptée"
+        IDENTITY_REJECTED = "identity_rejected", "Demande de vérification refusée"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
