@@ -89,6 +89,11 @@ black:
 black-check:
 	black --check .
 
+## bandit: Analyze project Python code for common security issues
+.PHONY: bandit
+bandit:
+	bandit -r . -x ./.venv,./.git,./.idea
+
 
 # ==================================================================================== #
 # FREEZE
