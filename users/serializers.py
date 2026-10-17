@@ -9,9 +9,12 @@ class ExpoPushTokenSerializer(serializers.Serializer):
     push_token = serializers.CharField(max_length=255, trim_whitespace=True)
 
     def validate_push_token(self, value):
-        if not value.startswith(("ExpoPushToken[", "ExponentPushToken[")) or not value.endswith("]"):
+        if not value.startswith(
+            ("ExpoPushToken[", "ExponentPushToken[")
+        ) or not value.endswith("]"):
             raise serializers.ValidationError("Jeton Expo Push invalide.")
         return value
+
 
 User = get_user_model()
 
@@ -20,12 +23,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     # TODO Ajouter un avatar
     # TODO Ajouter toutes les publications de l'utilisateur
     post_count = serializers.SerializerMethodField()
+
     class Meta:
         model = UserProfile
         fields = [
             "bio",
             "post_count",
-            ]
+        ]
 
     def get_post_count(self, obj):
         if obj.user.publications.exists():
@@ -46,15 +50,12 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "email",
-
             "email_verified",
             "identity_verified",
             "is_active",
             "account_deactivated_by_user",
-
             "is_staff",
             "is_superuser",
-
             "profile",
             "followers_count",
             "following_count",
@@ -94,21 +95,30 @@ class UserPreviewSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "username", "identity_verified", "profile"]
 
+
 class UserReportSerializer(serializers.Serializer):
     user_id = serializers.IntegerField()
-    reason = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
+    reason = serializers.CharField(
+        max_length=2000, allow_blank=False, trim_whitespace=True
+    )
 
     def validate_user_id(self, value):
         request = self.context["request"]
         if value == request.user.pk:
-            raise serializers.ValidationError("Vous ne pouvez pas signaler votre propre compte.")
-        if not User.objects.filter(pk=value, is_active=True, is_superuser=False).exists():
+            raise serializers.ValidationError(
+                "Vous ne pouvez pas signaler votre propre compte."
+            )
+        if not User.objects.filter(
+            pk=value, is_active=True, is_superuser=False
+        ).exists():
             raise serializers.ValidationError("Utilisateur introuvable.")
         return value
 
     def validate_reason(self, value):
         if not value.strip():
-            raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
+            raise serializers.ValidationError(
+                "Veuillez préciser le motif du signalement."
+            )
         return value.strip()
 
 

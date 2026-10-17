@@ -66,11 +66,10 @@ class PublicationSerializer(serializers.ModelSerializer):
 
     def validate_caption(self, value):
         if not value.strip():
-            raise serializers.ValidationError(
-                "Caption cannot be empty."
-            )
+            raise serializers.ValidationError("Caption cannot be empty.")
 
         return value
+
 
 class CommentAuthorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -81,6 +80,7 @@ class CommentAuthorSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
         ]
+
 
 class CommentSerializer(serializers.ModelSerializer):
     author = CommentAuthorSerializer(
@@ -106,9 +106,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     def validate_description(self, value):
         if not value.strip():
-            raise serializers.ValidationError(
-                "Comment cannot be empty."
-            )
+            raise serializers.ValidationError("Comment cannot be empty.")
 
         return value
 
@@ -154,11 +152,15 @@ class PublicationLikeSerializer(serializers.ModelSerializer):
 
 
 class PublicationReportSerializer(serializers.Serializer):
-    reason = serializers.CharField(max_length=2000, allow_blank=False, trim_whitespace=True)
+    reason = serializers.CharField(
+        max_length=2000, allow_blank=False, trim_whitespace=True
+    )
 
     def validate_reason(self, value):
         if not value.strip():
-            raise serializers.ValidationError("Veuillez préciser le motif du signalement.")
+            raise serializers.ValidationError(
+                "Veuillez préciser le motif du signalement."
+            )
         return value.strip()
 
 

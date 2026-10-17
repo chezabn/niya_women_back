@@ -19,18 +19,14 @@ class UserProfileAdmin(admin.ModelAdmin):
         "bio",
     )
 
-    ordering = (
-        "user__username",
-    )
+    ordering = ("user__username",)
 
     fields = (
         "user",
         "bio",
     )
 
-    readonly_fields = (
-        "user",
-    )
+    readonly_fields = ("user",)
 
     def bio_preview(self, obj):
         if not obj.bio:
@@ -53,9 +49,7 @@ class UserBlockAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "created_at",
-    )
+    list_filter = ("created_at",)
 
     search_fields = (
         "blocker__username",
@@ -68,9 +62,7 @@ class UserBlockAdmin(admin.ModelAdmin):
         "blocked__last_name",
     )
 
-    ordering = (
-        "-created_at",
-    )
+    ordering = ("-created_at",)
 
     readonly_fields = (
         "blocker",
@@ -106,9 +98,7 @@ class UserReportAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "created_at",
-    )
+    list_filter = ("created_at",)
 
     search_fields = (
         "reported__username",
@@ -122,9 +112,7 @@ class UserReportAdmin(admin.ModelAdmin):
         "reason",
     )
 
-    ordering = (
-        "-created_at",
-    )
+    ordering = ("-created_at",)
 
     readonly_fields = (
         "reporter",

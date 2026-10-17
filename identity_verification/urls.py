@@ -5,7 +5,8 @@ from .views import (
     SubmitIdentityVerificationView,
     AdminReviewIdentityView,
     ReviewIdentityView,
-    IdentityVerificationStatusView, AdminIdentityVerificationListView,
+    IdentityVerificationStatusView,
+    AdminIdentityVerificationListView,
 )
 
 urlpatterns = [
@@ -14,31 +15,26 @@ urlpatterns = [
         Healthcheck.as_view(),
         name="healthcheck_auth_api",
     ),
-
     path(
         "identity/submit/",
         SubmitIdentityVerificationView.as_view(),
         name="submit_identity",
     ),
-
     path(
         "identity/status/",
         IdentityVerificationStatusView.as_view(),
         name="identity_verification_status",
     ),
-
     path(
         "admin/identity/<int:pk>/review/",
         AdminReviewIdentityView.as_view(),
         name="admin_review_identity",
     ),
-
     path(
         "admin/identity/",
         AdminIdentityVerificationListView.as_view(),
         name="admin_identity_verification_list",
     ),
-
     path(
         "identity/<int:pk>/",
         ReviewIdentityView.as_view(),

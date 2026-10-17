@@ -27,9 +27,7 @@ def set_reporter_fk_cascade(apps, schema_editor, on_delete):
         ]
 
         for name in reporter_fk_names:
-            cursor.execute(
-                f"ALTER TABLE {quote(table)} DROP FOREIGN KEY {quote(name)}"
-            )
+            cursor.execute(f"ALTER TABLE {quote(table)} DROP FOREIGN KEY {quote(name)}")
 
         cursor.execute(
             f"ALTER TABLE {quote(table)} "

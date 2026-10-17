@@ -52,7 +52,6 @@ class Publication(models.Model):
         return f"Publication {self.pk}"
 
 
-
 class PublicationLike(models.Model):
     """
     Represents a like on a publication.
@@ -110,7 +109,6 @@ class Comment(models.Model):
     created_at = models.DateTimeField(
         auto_now_add=True,
     )
-
 
     class Meta:
         ordering = ["-created_at"]

@@ -18,7 +18,14 @@ from .models import UserBlock, UserReport
 __version__ = "1.0.0"
 __name__ = "Users API"
 
-from .serializers import UserSerializer, UserUpdateSerializer, UserPreviewSerializer, UserReportSerializer, UserReportDetailSerializer, ExpoPushTokenSerializer
+from .serializers import (
+    UserSerializer,
+    UserUpdateSerializer,
+    UserPreviewSerializer,
+    UserReportSerializer,
+    UserReportDetailSerializer,
+    ExpoPushTokenSerializer,
+)
 from django.contrib.auth import get_user_model
 
 from libs.errors import ACCOUNT_DEACTIVATED
@@ -219,9 +226,7 @@ class BlockedUsersAPIView(APIView):
 
     def get(self, request):
         users = (
-            User.objects.filter(
-                blocked_by_users__blocker=request.user
-            )
+            User.objects.filter(blocked_by_users__blocker=request.user)
             .select_related("profile")
             .distinct()
         )
@@ -233,18 +238,28 @@ class BlockedUsersAPIView(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+
 class UserBlockAPIView(APIView):
     permission_classes = [IsFullyAuthenticated]
 
     def post(self, request, user_id):
         target = get_object_or_404(User, pk=user_id, is_active=True, is_superuser=False)
         if target == request.user:
-            return Response({"detail": "Vous ne pouvez pas bloquer votre propre compte."}, status=status.HTTP_400_BAD_REQUEST)
-        _, created = UserBlock.objects.get_or_create(blocker=request.user, blocked=target)
+            return Response(
+                {"detail": "Vous ne pouvez pas bloquer votre propre compte."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        _, created = UserBlock.objects.get_or_create(
+            blocker=request.user, blocked=target
+        )
         Follow.objects.filter(
-            Q(follower=request.user, followed=target) | Q(follower=target, followed=request.user)
+            Q(follower=request.user, followed=target)
+            | Q(follower=target, followed=request.user)
         ).delete()
-        return Response({"blocked": True}, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+        return Response(
+            {"blocked": True},
+            status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
+        )
 
     def delete(self, request, user_id):
         UserBlock.objects.filter(blocker=request.user, blocked_id=user_id).delete()

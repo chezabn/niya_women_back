@@ -16,9 +16,9 @@ class NotificationListView(ListAPIView):
     pagination_class = FeedPagination
 
     def get_queryset(self):
-        queryset = Notification.objects.filter(recipient=self.request.user).select_related(
-            "actor", "publication"
-        )
+        queryset = Notification.objects.filter(
+            recipient=self.request.user
+        ).select_related("actor", "publication")
         unread = self.request.query_params.get("unread")
         if unread == "true":
             queryset = queryset.filter(read_at__isnull=True)
@@ -36,9 +36,12 @@ class NotificationReadView(APIView):
             recipient=request.user,
             read_at__isnull=True,
         ).update(read_at=timezone.now())
-        if not updated and not Notification.objects.filter(
-            pk=notification_id, recipient=request.user
-        ).exists():
+        if (
+            not updated
+            and not Notification.objects.filter(
+                pk=notification_id, recipient=request.user
+            ).exists()
+        ):
             return Response(status=status.HTTP_404_NOT_FOUND)
         return Response({"is_read": True}, status=status.HTTP_200_OK)
 

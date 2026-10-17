@@ -1,8 +1,13 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .views import (CommentViewSet, PublicationViewSet, PublicationLikeView,
-                    PublicationReportView, AdminPublicationReportsView)
+from .views import (
+    CommentViewSet,
+    PublicationViewSet,
+    PublicationLikeView,
+    PublicationReportView,
+    AdminPublicationReportsView,
+)
 
 router = DefaultRouter()
 
@@ -29,7 +34,7 @@ urlpatterns = [
         PublicationLikeView.as_view(),
         name="publication-like",
     ),
-        path(
+    path(
         "publications/<int:publication_id>/report/",
         PublicationReportView.as_view(),
         name="publication-report",

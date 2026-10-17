@@ -42,9 +42,7 @@ class CustomUserAdmin(UserAdmin):
         "last_name",
     )
 
-    ordering = (
-        "-date_joined",
-    )
+    ordering = ("-date_joined",)
 
     readonly_fields = (
         "last_login",
@@ -137,9 +135,7 @@ class CustomUserAdmin(UserAdmin):
         (
             "Créer une utilisatrice",
             {
-                "classes": (
-                    "wide",
-                ),
+                "classes": ("wide",),
                 "fields": (
                     "username",
                     "email",
@@ -153,9 +149,7 @@ class CustomUserAdmin(UserAdmin):
         (
             "Vérification",
             {
-                "classes": (
-                    "wide",
-                ),
+                "classes": ("wide",),
                 "fields": (
                     "accept_cgu",
                     "email_verified",
@@ -167,9 +161,7 @@ class CustomUserAdmin(UserAdmin):
         (
             "Statut du compte",
             {
-                "classes": (
-                    "wide",
-                ),
+                "classes": ("wide",),
                 "fields": (
                     "is_active",
                     "is_staff",

@@ -81,13 +81,18 @@ def _send_expo_push(notification_id):
         with urlopen(request, timeout=5) as response:
             result = json.loads(response.read().decode("utf-8"))
     except (URLError, TimeoutError, ValueError) as error:
-        logger.warning("Expo push request failed for notification %s: %s", notification_id, error)
+        logger.warning(
+            "Expo push request failed for notification %s: %s", notification_id, error
+        )
         return
 
     tickets = result.get("data", [])
     for token, ticket in zip(tokens, tickets):
         details = ticket.get("details") or {}
-        if ticket.get("status") == "error" and details.get("error") == "DeviceNotRegistered":
+        if (
+            ticket.get("status") == "error"
+            and details.get("error") == "DeviceNotRegistered"
+        ):
             ExpoPushToken.objects.filter(token=token).delete()
 
 

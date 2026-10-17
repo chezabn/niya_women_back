@@ -18,13 +18,17 @@ class UserBlock(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_blocks"
     )
     blocked = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="blocked_by_users"
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="blocked_by_users",
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=("blocker", "blocked"), name="unique_user_block"),
+            models.UniqueConstraint(
+                fields=("blocker", "blocked"), name="unique_user_block"
+            ),
             models.CheckConstraint(
                 condition=~models.Q(blocker=models.F("blocked")),
                 name="prevent_self_block",

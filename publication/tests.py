@@ -8,8 +8,20 @@ from .models import Comment, Publication, PublicationLike
 class PublicationAPITests(APITestCase):
     def setUp(self):
         User = get_user_model()
-        self.user = User.objects.create_user(username="author", email="author@example.com", password="StrongPass123!", identity_verified=True, email_verified=True)
-        self.reader = User.objects.create_user(username="reader", email="reader@example.com", password="StrongPass123!", identity_verified=True, email_verified=True)
+        self.user = User.objects.create_user(
+            username="author",
+            email="author@example.com",
+            password="StrongPass123!",
+            identity_verified=True,
+            email_verified=True,
+        )
+        self.reader = User.objects.create_user(
+            username="reader",
+            email="reader@example.com",
+            password="StrongPass123!",
+            identity_verified=True,
+            email_verified=True,
+        )
         self.client.force_authenticate(self.user)
         self.url = reverse("publications-list")
 
@@ -23,7 +35,9 @@ class PublicationAPITests(APITestCase):
         own_feed = self.client.get(reverse("publications-my-publications"))
         self.assertEqual(own_feed.data["count"], 1)
         detail = reverse("publications-detail", args=[publication.pk])
-        self.assertEqual(self.client.patch(detail, {"caption": "Edited"}).status_code, 200)
+        self.assertEqual(
+            self.client.patch(detail, {"caption": "Edited"}).status_code, 200
+        )
         publication.refresh_from_db()
         self.assertTrue(publication.is_edited)
         self.assertEqual(self.client.delete(detail).status_code, 204)
@@ -35,16 +49,32 @@ class PublicationAPITests(APITestCase):
         self.assertEqual(self.client.post(like_url).status_code, 201)
         self.assertEqual(self.client.post(like_url).status_code, 200)
         self.assertEqual(self.client.delete(like_url).status_code, 200)
-        response = self.client.post(reverse("comments-list"), {"publication": publication.pk, "description": "Nice"})
+        response = self.client.post(
+            reverse("comments-list"),
+            {"publication": publication.pk, "description": "Nice"},
+        )
         self.assertEqual(response.status_code, 201)
         comment = Comment.objects.get()
         self.assertEqual(comment.author, self.reader)
         self.client.force_authenticate(self.user)
-        self.assertEqual(self.client.delete(reverse("comments-detail", args=[comment.pk])).status_code, 403)
+        self.assertEqual(
+            self.client.delete(
+                reverse("comments-detail", args=[comment.pk])
+            ).status_code,
+            403,
+        )
 
     def test_comment_validation_and_full_authentication(self):
-        publication = Publication.objects.create(author=self.user, caption="Closed", comments_enabled=False)
-        self.assertEqual(self.client.post(reverse("comments-list"), {"publication": publication.pk, "description": "Text"}).status_code, 400)
+        publication = Publication.objects.create(
+            author=self.user, caption="Closed", comments_enabled=False
+        )
+        self.assertEqual(
+            self.client.post(
+                reverse("comments-list"),
+                {"publication": publication.pk, "description": "Text"},
+            ).status_code,
+            400,
+        )
         self.client.force_authenticate(None)
         self.assertEqual(self.client.get(self.url).status_code, 401)
         self.client.force_authenticate(self.reader)

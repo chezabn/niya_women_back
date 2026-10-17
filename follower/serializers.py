@@ -6,4 +6,3 @@ User = get_user_model()
 
 class FollowStatusSerializer(serializers.Serializer):
     is_following = serializers.BooleanField()
-

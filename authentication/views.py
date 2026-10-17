@@ -41,7 +41,8 @@ from libs.errors import (
     PASSWORD_CHANGED,
     MISSING_INFORMATION,
     PASSWORD_NOT_SECURED,
-    USER_OR_CODE_NOT_MATCH, ACCOUNT_DEACTIVATED,
+    USER_OR_CODE_NOT_MATCH,
+    ACCOUNT_DEACTIVATED,
 )
 
 
@@ -320,11 +321,8 @@ class LoginAPIView(TokenObtainPairView):
             user = User.objects.get(username=username)
         except User.DoesNotExist:
             return Response(
-                {
-                    "code": "AUTHENTICATION_FAILED",
-                    "detail": USER_NOT_FOUND
-                },
-                status=status.HTTP_404_NOT_FOUND
+                {"code": "AUTHENTICATION_FAILED", "detail": USER_NOT_FOUND},
+                status=status.HTTP_404_NOT_FOUND,
             )
 
         # Check if account is locked
@@ -382,7 +380,7 @@ class LoginAPIView(TokenObtainPairView):
             return Response(
                 {
                     "code": "AUTHENTICATION_FAILED",
-                    "detail": PASSWORD_FAILED.format(e=e)
+                    "detail": PASSWORD_FAILED.format(e=e),
                 },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
@@ -417,9 +415,7 @@ class ReactivateAccountAPIView(APIView):
 
         if not username or not password:
             return Response(
-                {
-                    "detail": "Username and password are required."
-                },
+                {"detail": "Username and password are required."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -453,6 +449,7 @@ class ReactivateAccountAPIView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
 
 # Views for verification email
 class SendVerificationCodeView(APIView):

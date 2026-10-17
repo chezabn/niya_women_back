@@ -21,14 +21,10 @@ class JournalSerializer(serializers.ModelSerializer):
 
     def validate_title(self, value):
         if not value.strip():
-            raise serializers.ValidationError(
-                "Title cannot be empty."
-            )
+            raise serializers.ValidationError("Title cannot be empty.")
         return value
 
     def validate_page(self, value):
         if not value.strip():
-            raise serializers.ValidationError(
-                "Page cannot be empty."
-            )
+            raise serializers.ValidationError("Page cannot be empty.")
         return value

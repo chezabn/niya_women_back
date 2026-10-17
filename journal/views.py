@@ -13,14 +13,10 @@ class JournalViewSet(ModelViewSet):
     serializer_class = JournalSerializer
 
     def get_queryset(self):
-        return Journal.objects.filter(
-            author=self.request.user
-        ).order_by(
+        return Journal.objects.filter(author=self.request.user).order_by(
             "-date",
             "-created_at",
         )
 
     def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.user
-        )
+        serializer.save(author=self.request.user)

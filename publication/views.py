@@ -25,8 +25,13 @@ from notifications.services import create_notification
 from users.models import UserBlock
 from .models import Comment, Publication, PublicationLike, PublicationReport
 from .pagination import FeedPagination
-from .serializers import (CommentSerializer, PublicationSerializer, PublicationLikeSerializer,
-                          PublicationReportSerializer, PublicationReportDetailSerializer)
+from .serializers import (
+    CommentSerializer,
+    PublicationSerializer,
+    PublicationLikeSerializer,
+    PublicationReportSerializer,
+    PublicationReportDetailSerializer,
+)
 
 
 class PublicationViewSet(ModelViewSet):
@@ -87,28 +92,43 @@ class PublicationViewSet(ModelViewSet):
         for caption in Publication.objects.filter(pk__in=interacted_ids).values_list(
             "caption", flat=True
         ):
-            interests.update(tag.casefold() for tag in self.hashtag_pattern.findall(caption))
+            interests.update(
+                tag.casefold() for tag in self.hashtag_pattern.findall(caption)
+            )
 
-        followed_ids = set(Follow.objects.filter(follower=user).values_list(
-            "followed_id", flat=True
-        ))
+        followed_ids = set(
+            Follow.objects.filter(follower=user).values_list("followed_id", flat=True)
+        )
         # Interactions with an author count independently, with a cap of 15 points.
         author_interactions = {}
-        for author_id, count in PublicationLike.objects.filter(user=user).values_list(
-            "publication__author_id"
-        ).annotate(total=Count("id")):
-            author_interactions[author_id] = author_interactions.get(author_id, 0) + count
-        for author_id, count in Comment.objects.filter(author=user).values_list(
-            "publication__author_id"
-        ).annotate(total=Count("id")):
-            author_interactions[author_id] = author_interactions.get(author_id, 0) + count
+        for author_id, count in (
+            PublicationLike.objects.filter(user=user)
+            .values_list("publication__author_id")
+            .annotate(total=Count("id"))
+        ):
+            author_interactions[author_id] = (
+                author_interactions.get(author_id, 0) + count
+            )
+        for author_id, count in (
+            Comment.objects.filter(author=user)
+            .values_list("publication__author_id")
+            .annotate(total=Count("id"))
+        ):
+            author_interactions[author_id] = (
+                author_interactions.get(author_id, 0) + count
+            )
 
         now = timezone.now()
         scored = []
         for publication in queryset:
-            tags = {tag.casefold() for tag in self.hashtag_pattern.findall(publication.caption)}
+            tags = {
+                tag.casefold()
+                for tag in self.hashtag_pattern.findall(publication.caption)
+            }
             hashtag_score = min(30, len(tags & interests) * 10)
-            interaction_score = min(15, author_interactions.get(publication.author_id, 0) * 3)
+            interaction_score = min(
+                15, author_interactions.get(publication.author_id, 0) * 3
+            )
             popularity_score = min(
                 15, (publication.score_likes * 2) + (publication.score_comments * 3)
             )
@@ -116,14 +136,25 @@ class PublicationViewSet(ModelViewSet):
             freshness_score = max(0, 25 - (age / (7 * 24 * 60 * 60)) * 25)
             score = (
                 (30 if publication.author_id in followed_ids else 0)
-                + hashtag_score + interaction_score + popularity_score + freshness_score
+                + hashtag_score
+                + interaction_score
+                + popularity_score
+                + freshness_score
             )
             scored.append((score, publication.created_at, publication))
 
         # With no personalization history, preserve the existing newest-first feed.
         if not followed_ids and not interests and not author_interactions:
-            return [item[2] for item in sorted(scored, key=lambda item: item[1], reverse=True)]
-        return [item[2] for item in sorted(scored, key=lambda item: (item[0], item[1]), reverse=True)]
+            return [
+                item[2]
+                for item in sorted(scored, key=lambda item: item[1], reverse=True)
+            ]
+        return [
+            item[2]
+            for item in sorted(
+                scored, key=lambda item: (item[0], item[1]), reverse=True
+            )
+        ]
 
     @action(detail=False, methods=["GET"], url_path="for-you")
     def for_you(self, request):
@@ -132,7 +163,9 @@ class PublicationViewSet(ModelViewSet):
         if page is not None:
             serializer = self.get_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
-        return Response(self.get_serializer(publications, many=True).data, status=status.HTTP_200_OK)
+        return Response(
+            self.get_serializer(publications, many=True).data, status=status.HTTP_200_OK
+        )
 
     def get_permissions(self):
         if self.action in [
@@ -215,12 +248,16 @@ class PublicationViewSet(ModelViewSet):
     def comments(self, request, pk=None):
         publication = self.get_object()
 
-        comments = Comment.objects.filter(
-            publication=publication,
-        ).select_related(
-            "author",
-        ).order_by(
-            "-created_at",
+        comments = (
+            Comment.objects.filter(
+                publication=publication,
+            )
+            .select_related(
+                "author",
+            )
+            .order_by(
+                "-created_at",
+            )
         )
 
         page = self.paginate_queryset(comments)
@@ -251,9 +288,13 @@ class PublicationViewSet(ModelViewSet):
         url_path="liked",
     )
     def liked_publications(self, request):
-        publications = self.get_queryset().filter(
-            likes__user=request.user,
-        ).distinct()
+        publications = (
+            self.get_queryset()
+            .filter(
+                likes__user=request.user,
+            )
+            .distinct()
+        )
 
         page = self.paginate_queryset(publications)
 
@@ -336,13 +377,18 @@ class CommentViewSet(ModelViewSet):
             Q(blocker=self.request.user) | Q(blocked=self.request.user)
         ).values_list("blocked_id", "blocker_id")
         hidden_ids = {pk for pair in blocked_ids for pk in pair}
-        return Comment.objects.filter(
-            publication__is_archived=False,
-        ).exclude(author_id__in=hidden_ids).select_related(
-            "author",
-            "publication",
-        ).order_by(
-            "-created_at",
+        return (
+            Comment.objects.filter(
+                publication__is_archived=False,
+            )
+            .exclude(author_id__in=hidden_ids)
+            .select_related(
+                "author",
+                "publication",
+            )
+            .order_by(
+                "-created_at",
+            )
         )
 
     def get_permissions(self):
@@ -460,7 +506,9 @@ class PublicationReportView(APIView):
     permission_classes = [IsFullyAuthenticated]
 
     def post(self, request, publication_id):
-        publication = get_object_or_404(Publication, pk=publication_id, is_archived=False)
+        publication = get_object_or_404(
+            Publication, pk=publication_id, is_archived=False
+        )
         if publication.author_id == request.user.pk:
             return Response(
                 {"detail": "Vous ne pouvez pas signaler votre propre publication."},
@@ -477,7 +525,10 @@ class PublicationReportView(APIView):
             reason=serializer.validated_data["reason"],
         )
         staff_emails = list(
-            get_user_model().objects.filter(is_staff=True).exclude(email="").values_list("email", flat=True)
+            get_user_model()
+            .objects.filter(is_staff=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
         )
         if staff_emails:
             send_mail(
@@ -501,4 +552,6 @@ class AdminPublicationReportsView(ListAPIView):
     permission_classes = [IsAdminUser]
     serializer_class = PublicationReportDetailSerializer
     pagination_class = FeedPagination
-    queryset = PublicationReport.objects.select_related("reporter", "publication", "publication__author")
+    queryset = PublicationReport.objects.select_related(
+        "reporter", "publication", "publication__author"
+    )

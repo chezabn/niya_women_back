@@ -34,9 +34,7 @@ class PublicationAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
-    ordering = (
-        "-created_at",
-    )
+    ordering = ("-created_at",)
 
     @admin.display(description="Caption")
     def caption_preview(self, obj):
@@ -54,9 +52,7 @@ class PublicationLikeAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "created_at",
-    )
+    list_filter = ("created_at",)
 
     search_fields = (
         "user__username",
@@ -64,13 +60,9 @@ class PublicationLikeAdmin(admin.ModelAdmin):
         "publication__caption",
     )
 
-    readonly_fields = (
-        "created_at",
-    )
+    readonly_fields = ("created_at",)
 
-    ordering = (
-        "-created_at",
-    )
+    ordering = ("-created_at",)
 
 
 @admin.register(Comment)
@@ -83,9 +75,7 @@ class CommentAdmin(admin.ModelAdmin):
         "created_at",
     )
 
-    list_filter = (
-        "created_at",
-    )
+    list_filter = ("created_at",)
 
     search_fields = (
         "description",
@@ -94,13 +84,9 @@ class CommentAdmin(admin.ModelAdmin):
         "publication__caption",
     )
 
-    readonly_fields = (
-        "created_at",
-    )
+    readonly_fields = ("created_at",)
 
-    ordering = (
-        "-created_at",
-    )
+    ordering = ("-created_at",)
 
     @admin.display(description="Description")
     def description_preview(self, obj):
@@ -111,9 +97,21 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(PublicationReport)
 class PublicationReportAdmin(admin.ModelAdmin):
-    list_display = ("id", "publication", "reported_author", "reporter", "reason_preview", "created_at")
+    list_display = (
+        "id",
+        "publication",
+        "reported_author",
+        "reporter",
+        "reason_preview",
+        "created_at",
+    )
     list_filter = ("created_at",)
-    search_fields = ("publication__caption", "publication__author__username", "reporter__username", "reason")
+    search_fields = (
+        "publication__caption",
+        "publication__author__username",
+        "reporter__username",
+        "reason",
+    )
     readonly_fields = ("publication", "reporter", "reason", "created_at")
     ordering = ("-created_at",)
     list_select_related = ("publication", "publication__author", "reporter")

@@ -24,7 +24,8 @@ from .constants import (
 from .models import IdentityVerificationRequest
 from .serializers import (
     VerificationRequestSerializer,
-    AdminVerificationReviewSerializer, IdentityVerificationDetailSerializer,
+    AdminVerificationReviewSerializer,
+    IdentityVerificationDetailSerializer,
 )
 
 
@@ -238,6 +239,7 @@ class AdminReviewIdentityView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
 class AdminIdentityVerificationListView(APIView):
     """
     Permet à un membre de l'équipe de validation de consulter
@@ -247,11 +249,9 @@ class AdminIdentityVerificationListView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
-        verification_requests = (
-            IdentityVerificationRequest.objects
-            .select_related("user", "reviewed_by")
-            .order_by("-created_at")
-        )
+        verification_requests = IdentityVerificationRequest.objects.select_related(
+            "user", "reviewed_by"
+        ).order_by("-created_at")
 
         status_filter = request.query_params.get("status", "").strip().lower()
         status_aliases = {
@@ -264,7 +264,9 @@ class AdminIdentityVerificationListView(APIView):
         if status_filter:
             if status_filter not in status_aliases:
                 return Response(
-                    {"status": "Valeur invalide. Utilisez pending, approved ou rejected."},
+                    {
+                        "status": "Valeur invalide. Utilisez pending, approved ou rejected."
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             verification_requests = verification_requests.filter(
@@ -280,6 +282,7 @@ class AdminIdentityVerificationListView(APIView):
 
         return paginator.get_paginated_response(serializer.data)
 
+
 class ReviewIdentityView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
@@ -289,14 +292,13 @@ class ReviewIdentityView(APIView):
             pk=pk,
         )
 
-        serializer = IdentityVerificationDetailSerializer(
-            verification_request
-        )
+        serializer = IdentityVerificationDetailSerializer(verification_request)
 
         return Response(
             serializer.data,
             status=status.HTTP_200_OK,
         )
+
 
 class IdentityVerificationStatusView(APIView):
     """

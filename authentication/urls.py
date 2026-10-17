@@ -7,7 +7,8 @@ from .views import (
     SendVerificationCodeView,
     VerifyEmailView,
     ConfirmPasswordResetView,
-    RequestPasswordResetView, ReactivateAccountAPIView,
+    RequestPasswordResetView,
+    ReactivateAccountAPIView,
 )
 
 urlpatterns = [
