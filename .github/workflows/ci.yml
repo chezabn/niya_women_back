@@ -33,6 +33,10 @@ jobs:
     env:
       SECRET_KEY: ci-secret-key
       DEBUG: "true"
+      CLOUDFLARE_BUCKET_NAME: ci-bucket
+      CLOUDFLARE_S3_ENDPOINT_URL: https://example.com
+      CLOUDFLARE_ACCESS_KEY_ID: ci-access-key
+      CLOUDFLARE_SECRET_ACCESS_KEY: ci-secret-key
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
