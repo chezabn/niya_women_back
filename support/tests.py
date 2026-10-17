@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.urls import reverse
 from rest_framework.test import APITestCase
 
@@ -26,7 +27,7 @@ class ReportProblemAPITests(APITestCase):
                 "Email de l'utilisatrice : member@example.com\n\n"
                 "Je ne peux pas accéder à mon compte."
             ),
-            from_email="contact@niyya-women.com",
+            from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=["contact@niyya-women.com"],
             fail_silently=False,
         )
