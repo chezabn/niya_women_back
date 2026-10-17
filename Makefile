@@ -84,6 +84,11 @@ test:
 black:
 	black .
 
+## black-check: Check black for all project
+.PHONY: black-check
+black-check:
+	black --check .
+
 
 # ==================================================================================== #
 # FREEZE
