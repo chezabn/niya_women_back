@@ -10,6 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from niya import settings
+from notifications.models import Notification
+from notifications.services import create_notification
 from publication.pagination import FeedPagination
 from .constants import (
     EMAIL_SUBJECT_VERIFICATION_REJECTED,
@@ -20,8 +22,6 @@ from .constants import (
     EMAIL_BODY_NEW_VERIFICATION_REQUEST,
 )
 from .models import IdentityVerificationRequest
-from notifications.models import Notification
-from notifications.services import create_notification
 from .serializers import (
     VerificationRequestSerializer,
     AdminVerificationReviewSerializer, IdentityVerificationDetailSerializer,

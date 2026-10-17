@@ -6,12 +6,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from users.models import UserBlock
-from users.serializers import UserPreviewSerializer
 from notifications.models import Notification
 from notifications.services import create_notification
 from publication.pagination import FeedPagination
-
+from users.models import UserBlock
+from users.serializers import UserPreviewSerializer
 from .models import Follow
 from .serializers import FollowStatusSerializer
 

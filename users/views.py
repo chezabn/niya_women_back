@@ -1,18 +1,18 @@
 import os
 
+from django.core.mail import send_mail
 from django.db import connections
 from django.db.models.query_utils import Q
-from rest_framework import status
-from rest_framework import serializers, status
-from rest_framework.generics import ListAPIView, RetrieveAPIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
+from rest_framework import status
+from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.mail import send_mail
-from niya import settings
+
 from follower.models import Follow
+from niya import settings
 from .models import UserBlock, UserReport
 
 __version__ = "1.0.0"

@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 
 from libs.permissions import IsFullyAuthenticated
 from publication.pagination import FeedPagination
-
 from .models import Notification
 from .serializers import NotificationSerializer
 

@@ -1,19 +1,20 @@
-from django.shortcuts import get_object_or_404
+import re
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
-from django.conf import settings
-from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAdminUser
 from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
-import re
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
+from follower.models import Follow
 from libs.permissions import (
     IsCommentOwner,
     IsFullyAuthenticated,
@@ -22,8 +23,6 @@ from libs.permissions import (
 from notifications.models import Notification
 from notifications.services import create_notification
 from users.models import UserBlock
-from follower.models import Follow
-
 from .models import Comment, Publication, PublicationLike, PublicationReport
 from .pagination import FeedPagination
 from .serializers import (CommentSerializer, PublicationSerializer, PublicationLikeSerializer,
